@@ -27,7 +27,7 @@ async def rank(ctx, *args):
                 pass
             await ctx.message.author.remove_roles(*other_roles)
             await ctx.message.author.add_roles(target_rank)
-            await ctx.send(f"Rank rolünüz verilmiştir. ({_rank})")
+            await ctx.send(f"{ctx.message.author.mention} rank rolünüz verilmiştir. ({args[0]} -> {_rank})")
         else:
             await ctx.send_help(rank)
 
@@ -70,5 +70,6 @@ def find_rank_role(roles, target):
 
 
 bot.run(os.environ["BOT_TOKEN"])
+
 
 
