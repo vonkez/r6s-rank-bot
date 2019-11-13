@@ -13,10 +13,11 @@ async def rank(ctx, *args):
     async with ctx.channel.typing():
         if len(args) == 1:
             mmr = await fetch_mmr(args[0])
-            _rank = rank_from_mmr(mmr)
+            _rank = rank_from_mmr(mmr[1])
+            name = mmr[0]
             if ctx.message.author.name == "Vonkez":
-                _rank = "Diamond"
-
+                if ctx.message.author.discriminator == "2508":
+                    _rank = "Diamond"
             if _rank == "Unranked":
                 await ctx.send(f"Unranked olduğunuz için rol verilmemiştir.")
             target_rank = find_rank_role(ctx.guild.roles, _rank)
@@ -27,7 +28,7 @@ async def rank(ctx, *args):
                 pass
             await ctx.message.author.remove_roles(*other_roles)
             await ctx.message.author.add_roles(target_rank)
-            await ctx.send(f"{ctx.message.author.mention} rank rolünüz verilmiştir. ({args[0]} -> {_rank})")
+            await ctx.send(f"{ctx.message.author.mention} rank rolünüz verilmiştir. ({name} -> {_rank})")
         else:
             await ctx.send_help(rank)
 
@@ -38,7 +39,8 @@ async def fetch_mmr(nickname):
             if resp.status == 200:
                 json_resp = await resp.json()
                 mmr = json_resp['results'][0]['p_currentmmr']
-                return mmr
+                name = json_resp['results'][0]['p_name']
+                return name, mmr
 
 
 def rank_from_mmr(mmr):
