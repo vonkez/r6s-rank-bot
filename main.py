@@ -13,6 +13,9 @@ async def rank(ctx, *args):
     async with ctx.channel.typing():
         if len(args) == 1:
             mmr = await fetch_mmr(args[0])
+            if mmr == None:
+                await ctx.send("Nickname bulunamadı, doğru yazdığınızdan emin olun.")
+                return
             _rank = rank_from_mmr(mmr[1])
             name = mmr[0]
             if ctx.message.author.name == "Vonkez":
@@ -38,10 +41,12 @@ async def fetch_mmr(nickname):
         async with session.get(f'https://r6tab.com/api/search.php?platform=uplay&search={nickname}') as resp:
             if resp.status == 200:
                 json_resp = await resp.json()
-                mmr = json_resp['results'][0]['p_currentmmr']
-                name = json_resp['results'][0]['p_name']
-                return name, mmr
-
+                try:
+                    mmr = json_resp['results'][0]['p_currentmmr']
+                    name = json_resp['results'][0]['p_name']
+                    return name, mmr
+                except KeyError:
+                    return None
 
 def rank_from_mmr(mmr):
     if mmr <= 1: return "Unranked"
