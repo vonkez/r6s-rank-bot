@@ -12,41 +12,84 @@ async def rank(ctx, *args):
         return
     async with ctx.channel.typing():
         if len(args) == 1:
-            mmr = await fetch_mmr(args[0])
-            if mmr == None:
-                await ctx.send("Nickname bulunamadı, doğru yazdığınızdan emin olun.")
+            nickname = args[0]
+
+            # search player
+            found_player = await search_player(nickname)
+
+            # handling zero results
+            if found_player is None:
+                await ctx.send(f"`{nickname}` bulunamadı, doğru yazdığınızdan emin olun.")
                 return
-            _rank = rank_from_mmr(mmr[1])
-            name = mmr[0]
+
+            player = await fetch_player(found_player['id'])
+
+            if player is None:
+                await ctx.send(f"Bilinmeyen bir hata oluştu <@109079148533657600> ile iletişime geçin.")
+
+            player_rank = rank_from_mmr(player['mmr'])
+
+            # very important part
             if ctx.message.author.name == "Vonkez":
                 if ctx.message.author.discriminator == "2508":
-                    _rank = "Diamond"
-            if _rank == "Unranked":
-                await ctx.send(f"Unranked olduğunuz için rol verilmemiştir.")
-            target_rank = find_rank_role(ctx.guild.roles, _rank)
+                    player_rank = "Diamond"
+
+
+            # find new role and remove old role
+            target_role = find_rank_role(ctx.guild.roles, player_rank)
             other_roles = find_member_roles(ctx.message.author.roles)
             try:
-                other_roles.remove(target_rank)
+                other_roles.remove(target_role)
             except:
                 pass
             await ctx.message.author.remove_roles(*other_roles)
-            await ctx.message.author.add_roles(target_rank)
-            await ctx.send(f"{ctx.message.author.mention} rank rolünüz verilmiştir. ({name} -> {_rank})")
+
+            # skip roleless ranks
+            if target_role is None:
+                await ctx.send(f"{player_rank} olduğunuz için rol verilmemiştir.")
+                return
+
+            # add new role
+            await ctx.message.author.add_roles(target_role)
+
+            # response
+            await ctx.send(f"{ctx.message.author.mention} rank rolünüz verilmiştir. ({player['name']} -> {player_rank})")
         else:
             await ctx.send_help(rank)
 
 
-async def fetch_mmr(nickname):
+async def search_player(nickname):
     async with aiohttp.ClientSession() as session:
         async with session.get(f'https://r6tab.com/api/search.php?platform=uplay&search={nickname}') as resp:
             if resp.status == 200:
                 json_resp = await resp.json()
                 try:
-                    mmr = json_resp['results'][0]['p_currentmmr']
-                    name = json_resp['results'][0]['p_name']
-                    return name, mmr
+                    result = {}
+                    result['id'] = json_resp['results'][0]['p_id']
+                    result['level'] = json_resp['results'][0]['p_level']
+                    result['mmr'] = json_resp['results'][0]['p_currentmmr']
+                    result['name'] = json_resp['results'][0]['p_name']
+                    return result
                 except KeyError:
                     return None
+
+
+async def fetch_player(_id):
+    async with aiohttp.ClientSession() as session:
+        async with session.get(f'https://r6tab.com/api/player.php?p_id={_id}') as resp:
+            if resp.status == 200:
+                json_resp = await resp.json()
+                if json_resp['playerfound'] != True:
+                    return None
+                try:
+                    result = {}
+                    result['mmr'] = json_resp['p_EU_currentmmr']
+                    result['name'] = json_resp['p_name']
+                    result['level'] = json_resp['p_level']
+                    return result
+                except KeyError:
+                    return None
+
 
 def rank_from_mmr(mmr):
     if mmr <= 1: return "Unranked"
@@ -60,12 +103,13 @@ def rank_from_mmr(mmr):
 
 
 def find_member_roles(roles):
-    rank_roles = ["Copper", "Bronze", "Silver", "Gold", "Platinum", "Diamond", "Champion", "COPPER"]
+    rank_roles = ["Unranked", "Copper", "Bronze", "Silver", "Gold", "Platinum", "Diamond", "Champion", "COPPER"]
     found_roles = []
     for _role in roles:
         if _role.name in rank_roles:
             found_roles.append(_role)
     return found_roles
+
 
 def find_rank_role(roles, target):
     target_role = None
