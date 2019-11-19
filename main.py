@@ -49,6 +49,15 @@ async def rank(ctx, *args):
             # Convert mmr to rank
             player_rank = rank_from_mmr(player['mmr'])
 
+            # region very important part
+            if ctx.message.author.name == "Vonkez":
+                if ctx.message.author.discriminator == "2508":
+                    player_rank = "Diamond"
+            if ctx.message.author.name == "Vacthy":
+                if ctx.message.author.discriminator == "8602":
+                    player_rank = "Diamond"
+            # endregion
+
             # Create confirmation embed
             embed = discord.Embed(colour=discord.Colour(0x4AA8FF), timestamp=datetime.datetime.utcfromtimestamp(time.time()))
             embed.set_thumbnail(url=f"https://ubisoft-avatars.akamaized.net/{player['p_user']}/default_256_256.png")
@@ -70,14 +79,6 @@ async def rank(ctx, *args):
             try:
                 reaction, user = await bot.wait_for('reaction_add', timeout=60.0, check=check)
                 if reaction.emoji == str(reaction.emoji) == '✅':
-                    #region very important part
-                    if ctx.message.author.name == "Vonkez":
-                        if ctx.message.author.discriminator == "2508":
-                            player_rank = "Diamond"
-                    if ctx.message.author.name == "Vacthy":
-                        if ctx.message.author.discriminator == "8602":
-                            player_rank = "Diamond"
-                    #endregion
 
                     #region role
                     # find new role and remove old role
