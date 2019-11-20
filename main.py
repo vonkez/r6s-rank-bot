@@ -92,7 +92,8 @@ async def rank(ctx, *args):
 
                     # skip roleless ranks
                     if target_role is None:
-                        await ctx.send(f"{player_rank} olduğunuz için rol verilmemiştir.")
+                        embed = create_error_embed(fake_mention,f"{player_rank} olduğunuz için rol verilmemiştir.")
+                        await ctx.send(embed=embed)
                         return
 
                     # add new role
