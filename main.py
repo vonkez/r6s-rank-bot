@@ -49,6 +49,10 @@ async def rank(ctx, *args):
             # Convert mmr to rank
             player_rank = rank_from_mmr(player['mmr'])
 
+            # Unranked fix
+            if player['rank'] == 0:
+                player_rank = "Unranked"
+
             # region very important part
             if ctx.message.author.name == "Vonkez":
                 if ctx.message.author.discriminator == "2508":
@@ -163,6 +167,7 @@ async def fetch_player(_id):
                     result['name'] = json_resp['p_name']
                     result['level'] = json_resp['p_level']
                     result['p_user'] = json_resp['p_user']
+                    result['rank'] = json_resp['p_currentrank']
                     return result
                 except KeyError:
                     return None
