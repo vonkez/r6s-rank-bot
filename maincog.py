@@ -73,7 +73,6 @@ class MainCog(commands.Cog):
     # endregion
 
     # region user commands
-
     @commands.command(name='kayıt', ignore_extra=False)
     @bot_channel_only()
     async def u_register(self, ctx, nickname):
@@ -95,6 +94,12 @@ class MainCog(commands.Cog):
     @bot_channel_only()
     async def u_delete(self, ctx):
         await self.delete(ctx, ctx.author)
+
+    @commands.command(name='rank')
+    @bot_channel_only()
+    async def rank(self, ctx):
+        error_embed = self.create_message_embed(ctx.author, 'red', 'Rank botu yeniledi. Artık  "!r6r kayıt <nickname>" yazarak kaydolabilirsiniz.')
+        await ctx.send(embed=error_embed)
 
     # endregion
 
