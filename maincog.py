@@ -65,7 +65,7 @@ class MainCog(commands.Cog):
         elif isinstance(error, commands.NotOwner):
             await self.log(ctx.guild.id, f"{str(ctx.author)} admin komutu kullanmaya çalıştı ({ctx.command})")
         elif isinstance(error, commands.CheckFailure):
-            await self.log(ctx.guild.id, f"{str(ctx.author)} yalış kanalda komut kullanmaya çalıştı ({ctx.command})")
+            await self.log(ctx.guild.id, f"{str(ctx.author)} {str(ctx.channel)} kanalında komut kullanmaya çalıştı ({ctx.command})")
         else:
             # Default error message
             print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
@@ -214,7 +214,7 @@ class MainCog(commands.Cog):
                                       player['mmr'], datetime.date.today())
             # show result
             result_embed = self.create_profile_embed(user, player['p_user'], player['name'], player['rank'],
-                                                    player['level'], player['mmr'], datetime.date.today(), 'blue',
+                                                    player['level'], player['mmr'], datetime.date.today(), 'green',
                                                     "Kayıdınız tamamlanmıştır.")
             await ctx.send(embed=result_embed)
 
@@ -370,7 +370,7 @@ class MainCog(commands.Cog):
         embed.add_field(name="Rank", value=rank, inline=True)
         embed.add_field(name="Level", value=level, inline=True)
         embed.add_field(name="MMR", value=mmr, inline=True)
-        embed.add_field(name="Update Date", value=ud, inline=True)
+        embed.add_field(name="Son güncelleme", value=ud, inline=True)
         embed.add_field(name="\u200B", value="\u200B", inline=True)
 
         if message:
