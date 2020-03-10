@@ -286,6 +286,11 @@ class MainCog(commands.Cog):
         player = await self.fetch_player(p_id=db_user['r6_id'])
         guild = self.bot.get_guild(list(self.configs.keys())[0])
         user = guild.get_member(db_user['dc_id'])
+        if not user:
+            # user left the guild
+            await self.db.delete_user(db_user['dc_id'])
+            await self.log(guild.id, f"{db_user['dc_id']} deleted from database")
+            return
 
         # assign new role
         roles_assigned = await self.assign_role(user, player['rank'])
