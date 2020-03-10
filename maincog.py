@@ -36,18 +36,7 @@ class MainCog(commands.Cog):
     async def update_loop(self):
         while True:
             await asyncio.sleep(86400)
-            guild_id = list(self.configs.keys())[0]
-            counter = 0
-            await self.log(guild_id, 'Otomatik rank güncelleme başladı.')
-            db_users = await self.db.get_all_users()
-            today = datetime.date.today()
-            for u in db_users:
-                time_elapsed = today - u['update_date']
-                if time_elapsed > self.update_rate:
-                    await self.silent_update(u)
-                    await asyncio.sleep(5)
-                    counter += 1
-            await self.log(guild_id, f'Otomatik rank güncelleme bitti. {counter}/{len(db_users)}')
+            await self.update_all()
 
     # region event listeners
     @commands.Cog.listener()
@@ -178,6 +167,11 @@ class MainCog(commands.Cog):
     async def register_guild(self, ctx):
         await self.db.insert_config(ctx.guild.id)
         await ctx.send(f"{ctx.guild.id} registered to database")
+
+    @admin.command()
+    async def force_update_all(self, ctx):
+        await self.update_all(ignore_ur=True)
+
     # endregion
 
     # region main methods
@@ -317,9 +311,25 @@ class MainCog(commands.Cog):
 
 
     # region helpers
-    async def update_all(self):
-        a = self.db.get_all_users()
-        print(a)
+    async def update_all(self, ignore_ur=False):
+        guild_id = list(self.configs.keys())[0]
+        counter = 0
+        await self.log(guild_id, 'Otomatik rank güncelleme başladı.')
+        db_users = await self.db.get_all_users()
+        today = datetime.date.today()
+        for u in db_users:
+            if ignore_ur:
+                await self.silent_update(u)
+                await asyncio.sleep(5)
+                counter += 1
+            else:
+                time_elapsed = today - u['update_date']
+                if time_elapsed > self.update_rate:
+                    await self.silent_update(u)
+                    await asyncio.sleep(5)
+                    counter += 1
+        await self.log(guild_id, f'Otomatik rank güncelleme bitti. {counter}/{len(db_users)}')
+
 
     async def ask_question(self, ctx, embed):
         def check(reaction, user):
