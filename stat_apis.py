@@ -8,8 +8,9 @@ class R6Tab():
         results = []
         async with aiohttp.ClientSession() as session:
             async with session.get(f'https://r6.apitab.com/search/uplay/{nickname}?u={timestamp}') as resp:
+                json_resp = await resp.json()
+                print(json_resp)
                 if resp.status == 200:
-                    json_resp = await resp.json()
                     for k, v in json_resp['players'].items():
                         player = SimpleNamespace(name=v['profile']['p_name'],
                                                  id=v['profile']['p_user'],
@@ -31,8 +32,9 @@ class R6Tab():
             url = f'https://r6.apitab.com/update/{r6_id}?u={timestamp}'
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as resp:
+                json_resp = await resp.json()
+                print(json_resp)
                 if resp.status == 200:
-                    json_resp = await resp.json()
                     if json_resp['found']:
                         player = SimpleNamespace(name=json_resp['player']['p_name'],
                                                  id=json_resp['player']['p_user'],
@@ -43,7 +45,6 @@ class R6Tab():
                     return player
                 else:
                     raise ConnectionError
-
 
 def find_rank(mmr, rank_no):
     if rank_no == 0:
