@@ -194,7 +194,7 @@ class MainCog(commands.Cog):
             await ctx.send(embed=error_embed)
             return
 
-        player = players[0]
+        player = await self.stat_api.player(players[0].id, True)
 
         confirmation_embed = self.create_profile_embed(user, player.id, player.name, player.rank,
                                                        player.level, player.mmr, datetime.date.today(), 'blue',

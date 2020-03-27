@@ -10,15 +10,14 @@ class R6Tab():
             async with session.get(f'https://r6.apitab.com/search/uplay/{nickname}?u={timestamp}') as resp:
                 if resp.status == 200:
                     json_resp = await resp.json()
-                    if json_resp['foundmatch']:
-                        for k, v in json_resp['players'].items():
-                            player = SimpleNamespace(name=v['profile']['p_name'],
-                                                     id=v['profile']['p_user'],
-                                                     level=v['stats']['level'],
-                                                     mmr=v['ranked']['mmr'],
-                                                     rank_no=v['ranked']['rank'],
-                                                     rank=find_rank(v['ranked']['mmr'], v['ranked']['rank']))
-                            results.append(player)
+                    for k, v in json_resp['players'].items():
+                        player = SimpleNamespace(name=v['profile']['p_name'],
+                                                 id=v['profile']['p_user'],
+                                                 level=v['stats']['level'],
+                                                 mmr=v['ranked']['EU_mmr'],
+                                                 rank_no=v['ranked']['rank'],
+                                                 rank=find_rank(v['ranked']['EU_mmr'], v['ranked']['rank']))
+                        results.append(player)
                     return results
                 else:
                     raise ConnectionError
@@ -38,9 +37,9 @@ class R6Tab():
                         player = SimpleNamespace(name=json_resp['player']['p_name'],
                                                  id=json_resp['player']['p_user'],
                                                  level=json_resp['stats']['level'],
-                                                 mmr=json_resp['ranked']['mmr'],
+                                                 mmr=json_resp['ranked']['EU_mmr'],
                                                  rank_no=json_resp['ranked']['rank'],
-                                                 rank=find_rank(json_resp['ranked']['mmr'], json_resp['ranked']['rank']))
+                                                 rank=find_rank(json_resp['ranked']['EU_mmr'], json_resp['ranked']['rank']))
                     return player
                 else:
                     raise ConnectionError
