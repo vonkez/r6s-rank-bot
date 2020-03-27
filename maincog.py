@@ -1,5 +1,6 @@
 from discord.ext import commands
 from db import create_db
+from stat_apis import R6Tab
 import traceback
 import datetime
 import aiohttp
@@ -18,6 +19,7 @@ class MainCog(commands.Cog):
                        'blue' : 0x4AA8FF}
         self.configs = {}
         self.i = 1
+        self.stat_api = R6Tab()
         self.update_rate = datetime.timedelta(days=7)
         self.update_task = None
 
@@ -182,17 +184,20 @@ class MainCog(commands.Cog):
             await ctx.send(embed=error_embed)
             return
 
-        player = await self.fetch_player(nickname)
+        players = await self.stat_api.search(nickname)
+
+        # player = await self.fetch_player(nickname)
 
         # Check if player found
-        if not player:
+        if not players:
             error_embed = self.create_message_embed(user, 'red', f"`{nickname}` bulunamadı, doğru yazdığınızdan emin olun.")
             await ctx.send(embed=error_embed)
             return
 
+        player = players[0]
 
-        confirmation_embed = self.create_profile_embed(user, player['p_user'], player['name'], player['rank'],
-                                                       player['level'], player['mmr'], datetime.date.today(), 'blue',
+        confirmation_embed = self.create_profile_embed(user, player.id, player.name, player.rank,
+                                                       player.level, player.mmr, datetime.date.today(), 'blue',
                                                        "Yukarıdaki bilgiler size aitse ✅, değilse ❌ emojisine tıklayın.")
         confirmed = await self.ask_question(ctx, confirmation_embed)
 
@@ -200,15 +205,15 @@ class MainCog(commands.Cog):
             return
 
         # assign new role
-        roles_assigned = await self.assign_role(user, player['rank'])
+        roles_assigned = await self.assign_role(user, player.rank)
         if roles_assigned:
 
             # add to database
-            await self.db.insert_user(user.id, user.name, player['p_id'], player['name'], player['level'],
-                                      player['mmr'], datetime.date.today())
+            await self.db.insert_user(user.id, user.name, player.id, player.name, player.level,
+                                      player.mmr, datetime.date.today())
             # show result
-            result_embed = self.create_profile_embed(user, player['p_user'], player['name'], player['rank'],
-                                                    player['level'], player['mmr'], datetime.date.today(), 'green',
+            result_embed = self.create_profile_embed(user, player.id, player.name, player.rank,
+                                                    player.level, player.mmr, datetime.date.today(), 'green',
                                                     "Kayıdınız tamamlanmıştır.")
             await ctx.send(embed=result_embed)
 
@@ -223,18 +228,18 @@ class MainCog(commands.Cog):
 
         db_user = db_users[0]
 
-        player = await self.fetch_player(p_id=db_user['r6_id'])
+        player = await self.stat_api.player(db_user['r6_id'], True)
 
         # assign new role
-        roles_assigned = await self.assign_role(user, player['rank'])
+        roles_assigned = await self.assign_role(user, player.rank)
         if roles_assigned:
             # update database
-            await self.db.update_user(user.id, user.name, player['p_id'], player['name'], player['level'],
-                                      player['mmr'], datetime.date.today())
+            await self.db.update_user(user.id, user.name, player.id, player.name, player.level,
+                                      player.mmr, datetime.date.today())
 
             # show result
-            result_embed = self.create_profile_embed(user, player['p_user'], player['name'], player['rank'],
-                                                     player['level'], player['mmr'], datetime.date.today(), 'green',
+            result_embed = self.create_profile_embed(user, player.id, player.name, player.rank,
+                                                     player.level, player.mmr, datetime.date.today(), 'green',
                                                      "Profiliniz güncellenmiştir.")
             await ctx.send(embed=result_embed)
 
@@ -283,24 +288,27 @@ class MainCog(commands.Cog):
         await ctx.send(embed=result_embed)
 
     async def silent_update(self, db_user):
-        player = await self.fetch_player(p_id=db_user['r6_id'])
+        player = await self.stat_api.player(db_user['r6_id'], True)
         guild = self.bot.get_guild(list(self.configs.keys())[0])
         user = guild.get_member(db_user['dc_id'])
         if not user:
             # user left the guild
-            await self.db.delete_user(db_user['dc_id'])
-            await self.log(guild.id, f"{db_user['dc_id']} deleted from database")
+            await self.log(guild.id, f"Can't find <@!{db_user['dc_id']}> in server ")
+
+            #await self.db.delete_user(db_user['dc_id'])
+            #await self.log(guild.id, f"{db_user['dc_id']} deleted from database")
+
             return
 
         # assign new role
-        roles_assigned = await self.assign_role(user, player['rank'])
+        roles_assigned = await self.assign_role(user, player.rank)
         if roles_assigned:
             # update database
-            await self.db.update_user(db_user['dc_id'], db_user['dc_nick'], db_user['r6_id'], db_user['r6_nick'], player['level'],
-                                      player['mmr'], datetime.date.today())
+            await self.db.update_user(db_user['dc_id'], db_user['dc_nick'], db_user['r6_id'], db_user['r6_nick'], player.level,
+                                      player.mmr, datetime.date.today())
 
             # log result
-            await self.log(guild.id, f"{str(user)} - ({db_user['r6_nick']}), MMR: {db_user['mmr']} -> {player['mmr']}")
+            await self.log(guild.id, f"{str(user)} - ({db_user['r6_nick']}), MMR: {db_user['mmr']} -> {player.mmr}")
 
     async def fetch_configs(self):
         config_columns = await self.db.get_config_columns()
