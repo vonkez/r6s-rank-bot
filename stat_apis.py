@@ -11,6 +11,8 @@ class R6Tab():
                 json_resp = await resp.json()
                 print(json_resp)
                 if resp.status == 200:
+                    if not json_resp['players']:
+                        return results
                     for k, v in json_resp['players'].items():
                         player = SimpleNamespace(name=v['profile']['p_name'],
                                                  id=v['profile']['p_user'],
