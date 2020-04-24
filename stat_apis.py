@@ -87,7 +87,7 @@ class R6Stats:
                                              avatar256=json_resp['avatar_url_256'],
                                              level=json_resp['progression']['level'])
                     return player
-                elif resp.status == 404:
+                elif resp.status == 404 or resp == 500:
                     return None
                 else:
                     print(resp.request_info)
