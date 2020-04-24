@@ -221,12 +221,14 @@ class MainCog(commands.Cog):
     async def update(self, ctx, user):
         # is registered
         db_users = (await self.db.get_users(user.id))
+
         if not db_users:
             error_embed = self.create_message_embed(user, 'red', f'Kaydınız bulunamadı. Güncellemeden önce kayıt olmanız gerekiyor.')
             await ctx.send(embed=error_embed)
             return
 
         db_user = db_users[0]
+        db_mmr = str(db_user["mmr"])
 
         player = await self.stat_api.get_player(db_user['r6_nick'], update=True)
 
@@ -239,7 +241,7 @@ class MainCog(commands.Cog):
 
             # show result
             result_embed = self.create_profile_embed(user, player.ubisoft_id, player.name, player.rank_text,
-                                                     player.level, player.mmr, datetime.date.today(), 'green',
+                                                     player.level,  db_mmr + " -> " + str(player.mmr), datetime.date.today(), 'green',
                                                      "Profiliniz güncellenmiştir.")
             await ctx.send(embed=result_embed)
 

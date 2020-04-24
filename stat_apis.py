@@ -154,7 +154,6 @@ class RateLimiter:
 
     async def __aenter__(self):
         if time.time() - self.updated_at > 60:
-            print("TOKENS REFRESHED")
             self.tokens = self.token_rate
             self.updated_at = time.time()
 
