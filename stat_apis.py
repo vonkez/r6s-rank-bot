@@ -87,7 +87,7 @@ class R6Stats:
                                              avatar256=json_resp['avatar_url_256'],
                                              level=json_resp['progression']['level'])
                     return player
-                elif resp.status == 404 or resp == 500:
+                elif resp.status == 404 or resp.status == 500:
                     return None
                 else:
                     print(resp.request_info)
@@ -114,7 +114,7 @@ class R6Stats:
                                              rank_image=json_resp['seasons']['void_edge']['regions']['emea'][0]['rank_image'],
                                              rank_short=json_resp['seasons']['void_edge']['regions']['emea'][0]['rank_text'].split()[0])
                     return player
-                elif resp.status == 404 or resp == 500:
+                elif resp.status == 404 or resp.status == 500:
                     return None
                 else:
                     print(resp.request_info)
