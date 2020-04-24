@@ -1,6 +1,6 @@
 from discord.ext import commands
 from db import create_db
-from stat_apis import R6Tab
+from stat_apis import R6Stats
 import traceback
 import datetime
 import aiohttp
@@ -19,7 +19,7 @@ class MainCog(commands.Cog):
                        'blue' : 0x4AA8FF}
         self.configs = {}
         self.i = 1
-        self.stat_api = R6Tab()
+        self.stat_api = R6Stats()
         self.update_rate = datetime.timedelta(days=7)
         self.update_task = None
 
@@ -184,19 +184,19 @@ class MainCog(commands.Cog):
             await ctx.send(embed=error_embed)
             return
 
-        players = await self.stat_api.search(nickname)
+        player = await self.stat_api.get_player(nickname, update=True)
 
         # player = await self.fetch_player(nickname)
 
         # Check if player found
-        if not players:
+        if not player:
             error_embed = self.create_message_embed(user, 'red', f"`{nickname}` bulunamadı, doğru yazdığınızdan emin olun.")
             await ctx.send(embed=error_embed)
             return
 
-        player = await self.stat_api.player(players[0].id, True)
+        # player = await self.stat_api.player(players[0].id, True)
 
-        confirmation_embed = self.create_profile_embed(user, player.id, player.name, player.rank,
+        confirmation_embed = self.create_profile_embed(user, player.ubisoft_id, player.ubisoft_id, player.rank_text,
                                                        player.level, player.mmr, datetime.date.today(), 'blue',
                                                        "Yukarıdaki bilgiler size aitse ✅, değilse ❌ emojisine tıklayın.")
         confirmed = await self.ask_question(ctx, confirmation_embed)
@@ -205,14 +205,14 @@ class MainCog(commands.Cog):
             return
 
         # assign new role
-        roles_assigned = await self.assign_role(user, player.rank)
+        roles_assigned = await self.assign_role(user, player.rank_short)
         if roles_assigned:
 
             # add to database
-            await self.db.insert_user(user.id, user.name, player.id, player.name, player.level,
+            await self.db.insert_user(user.id, user.name, player.ubisoft_id, player.name, player.level,
                                       player.mmr, datetime.date.today())
             # show result
-            result_embed = self.create_profile_embed(user, player.id, player.name, player.rank,
+            result_embed = self.create_profile_embed(user, player.ubisoft_id, player.name, player.rank_text,
                                                     player.level, player.mmr, datetime.date.today(), 'green',
                                                     "Kayıdınız tamamlanmıştır.")
             await ctx.send(embed=result_embed)
@@ -228,17 +228,17 @@ class MainCog(commands.Cog):
 
         db_user = db_users[0]
 
-        player = await self.stat_api.player(db_user['r6_id'], True)
+        player = await self.stat_api.get_player(db_user['r6_nick'], update=True)
 
         # assign new role
-        roles_assigned = await self.assign_role(user, player.rank)
+        roles_assigned = await self.assign_role(user, player.rank_short)
         if roles_assigned:
             # update database
-            await self.db.update_user(user.id, user.name, player.id, player.name, player.level,
+            await self.db.update_user(user.id, user.name, player.ubisoft_id, player.name, player.level,
                                       player.mmr, datetime.date.today())
 
             # show result
-            result_embed = self.create_profile_embed(user, player.id, player.name, player.rank,
+            result_embed = self.create_profile_embed(user, player.ubisoft_id, player.name, player.rank_text,
                                                      player.level, player.mmr, datetime.date.today(), 'green',
                                                      "Profiliniz güncellenmiştir.")
             await ctx.send(embed=result_embed)
@@ -288,7 +288,8 @@ class MainCog(commands.Cog):
         await ctx.send(embed=result_embed)
 
     async def silent_update(self, db_user):
-        player = await self.stat_api.player(db_user['r6_id'], True)
+        player = await self.stat_api.get_player(db_user['r6_nick'], update=True)
+        # player = await self.stat_api.player(db_user['r6_id'], True)
         guild = self.bot.get_guild(list(self.configs.keys())[0])
         user = guild.get_member(db_user['dc_id'])
         if not user:
@@ -301,7 +302,7 @@ class MainCog(commands.Cog):
             return
 
         # assign new role
-        roles_assigned = await self.assign_role(user, player.rank)
+        roles_assigned = await self.assign_role(user, player.rank_short)
         if roles_assigned:
             # update database
             await self.db.update_user(db_user['dc_id'], db_user['dc_nick'], db_user['r6_id'], db_user['r6_nick'], player.level,
