@@ -90,6 +90,9 @@ class R6Stats:
                 elif resp.status == 404:
                     return None
                 else:
+                    print(resp.request_info)
+                    print(resp.status)
+                    print(resp.cookies)
                     print(await resp.json())
                     raise ConnectionError
 
@@ -111,9 +114,12 @@ class R6Stats:
                                              rank_image=json_resp['seasons']['void_edge']['regions']['emea'][0]['rank_image'],
                                              rank_short=json_resp['seasons']['void_edge']['regions']['emea'][0]['rank_text'].split()[0])
                     return player
-                elif resp.status == 404:
+                elif resp.status == 404 or resp == 500:
                     return None
                 else:
+                    print(resp.request_info)
+                    print(resp.status)
+                    print(resp.cookies)
                     print(await resp.json())
                     raise ConnectionError
 

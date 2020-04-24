@@ -196,7 +196,7 @@ class MainCog(commands.Cog):
 
         # player = await self.stat_api.player(players[0].id, True)
 
-        confirmation_embed = self.create_profile_embed(user, player.ubisoft_id, player.ubisoft_id, player.rank_text,
+        confirmation_embed = self.create_profile_embed(user, player.ubisoft_id, player.name, player.rank_text,
                                                        player.level, player.mmr, datetime.date.today(), 'blue',
                                                        "Yukarıdaki bilgiler size aitse ✅, değilse ❌ emojisine tıklayın.")
         confirmed = await self.ask_question(ctx, confirmation_embed)
