@@ -232,7 +232,8 @@ class MainCog(commands.Cog):
 
         player = await self.stat_api.get_player(db_user['r6_nick'], update=True)
         if not player:
-            await self.create_message_embed(user, 'red', 'Güncelleme sırasında sorun oluştu, yeniden kayıt olmayı deneyebilirsiniz. (!r6r sil -> !r6r kayıt <nickname>)')
+            error_embed = self.create_message_embed(user, 'red', 'Güncelleme sırasında sorun oluştu, yeniden kayıt olmayı deneyebilirsiniz. (!r6r sil -> !r6r kayıt <nickname>)')
+            await ctx.send(embed=error_embed)
             return
 
         # assign new role
@@ -324,7 +325,7 @@ class MainCog(commands.Cog):
                                       player.mmr, datetime.date.today())
 
             # log result
-            await self.log(guild.id, f"DC:{str(user)} - <@!{db_user['dc_id']}>  R6:{db_user['r6_nick']}) MMR: {db_user['mmr']} -> {player.mmr}")
+            await self.log(guild.id, f"DC:{str(user)} - <@!{db_user['dc_id']}>  R6:{db_user['r6_nick']} MMR: {db_user['mmr']} -> {player.mmr}")
 
     async def fetch_configs(self):
         config_columns = await self.db.get_config_columns()
