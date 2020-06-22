@@ -90,10 +90,15 @@ class R6Stats:
                 elif resp.status == 404 or resp.status == 500:
                     return None
                 else:
-                    print(resp.request_info)
-                    print(resp.status)
-                    print(resp.cookies)
-                    print(await resp.json())
+                    print("R6STATS GENERIC REQUEST FAIL")
+                    print("Request info: " + resp.request_info)
+                    print(f"Status: {resp.status}")
+                    print(f"Status: {resp.cookies}")
+                    print(f"Status: {resp.text()}")
+                    try:
+                        print(await resp.json())
+                    except:
+                        pass
                     raise ConnectionError
 
     async def seasonal(self, nickname):
@@ -107,20 +112,25 @@ class R6Stats:
                                              ubisoft_id=json_resp['ubisoft_id'],
                                              avatar_146=json_resp['avatar_url_146'],
                                              avatar256=json_resp['avatar_url_256'],
-                                             mmr=json_resp['seasons']['void_edge']['regions']['emea'][0]['mmr'],
-                                             max_mmr=json_resp['seasons']['void_edge']['regions']['emea'][0]['max_mmr'],
-                                             rank_text=json_resp['seasons']['void_edge']['regions']['emea'][0]['rank_text'],
-                                             rank_no=json_resp['seasons']['void_edge']['regions']['emea'][0]['rank'],
-                                             rank_image=json_resp['seasons']['void_edge']['regions']['emea'][0]['rank_image'],
-                                             rank_short=json_resp['seasons']['void_edge']['regions']['emea'][0]['rank_text'].split()[0])
+                                             mmr=json_resp['seasons']['steel_wave']['regions']['emea'][0]['mmr'],
+                                             max_mmr=json_resp['seasons']['steel_wave']['regions']['emea'][0]['max_mmr'],
+                                             rank_text=json_resp['seasons']['steel_wave']['regions']['emea'][0]['rank_text'],
+                                             rank_no=json_resp['seasons']['steel_wave']['regions']['emea'][0]['rank'],
+                                             rank_image=json_resp['seasons']['steel_wave']['regions']['emea'][0]['rank_image'],
+                                             rank_short=json_resp['seasons']['steel_wave']['regions']['emea'][0]['rank_text'].split()[0])
                     return player
                 elif resp.status == 404 or resp.status == 500:
                     return None
                 else:
-                    print(resp.request_info)
-                    print(resp.status)
-                    print(resp.cookies)
-                    print(await resp.json())
+                    print("R6STATS SEASONAL REQUEST FAIL")
+                    print("Request info: " + resp.request_info)
+                    print(f"Status: {resp.status}")
+                    print(f"Status: {resp.cookies}")
+                    print(f"Status: {resp.text()}")
+                    try:
+                        print(await resp.json())
+                    except:
+                        pass
                     raise ConnectionError
 
     async def get_player(self, nickname, r6_id=None, update=None):

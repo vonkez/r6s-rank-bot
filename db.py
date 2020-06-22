@@ -115,5 +115,5 @@ class DB:
             return rows
 
     def disconnect(self):
-        self.pool.close()
+        self.pool.terminate()
         print("Database connection closed")

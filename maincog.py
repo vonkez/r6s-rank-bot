@@ -26,11 +26,11 @@ class MainCog(commands.Cog):
     def bot_channel_only():
         async def predicate(ctx):
             return ctx.channel.id == ctx.cog.configs[ctx.guild.id]['bot_channel']
-            x = ctx.channel.id == ctx.cog.configs[ctx.guild.id]['bot_channel']
-            if x:
-                return x
-            else:
-                raise commands.CommandError('wrong_channel')
+            # x = ctx.channel.id == ctx.cog.configs[ctx.guild.id]['bot_channel']
+            # if x:
+            #     return x
+            # else:
+            #     raise commands.CommandError('wrong_channel')
         return commands.check(predicate)
 
 
@@ -228,9 +228,12 @@ class MainCog(commands.Cog):
             return
 
         db_user = db_users[0]
-        db_mmr = str(db_user["mmr"])
+        db_mmr = str(db_user['mmr'])
 
         player = await self.stat_api.get_player(db_user['r6_nick'], update=True)
+        if not player:
+            await self.create_message_embed(user, 'red', 'Güncelleme sırasında sorun oluştu, yeniden kayıt olmayı deneyebilirsiniz. (!r6r sil -> !r6r kayıt <nickname>)')
+            return
 
         # assign new role
         roles_assigned = await self.assign_role(user, player.rank_short)
@@ -248,16 +251,18 @@ class MainCog(commands.Cog):
 
     async def profile(self, ctx, user):
         # is registered
-        db_users = (await self.db.get_users(user.id))
-        if not db_users:
-            error_embed = self.create_message_embed(user, 'red', f'Kaydınız bulunamadı. Profil görüntülemeden önce kayıt olmanız gerekiyor.')
-            await ctx.send(embed=error_embed)
-            return
-        db_user = db_users[0]
-
-        result_embed = self.create_profile_embed(user, db_user['r6_id'], db_user['r6_nick'], self.find_rank(db_user),
-                                                 db_user['level'], db_user['mmr'], datetime.date.today(), 'green')
-        await ctx.send(embed=result_embed)
+        # db_users = (await self.db.get_users(user.id))
+        # if not db_users:
+        #     error_embed = self.create_message_embed(user, 'red', f'Kaydınız bulunamadı. Profil görüntülemeden önce kayıt olmanız gerekiyor.')
+        #     await ctx.send(embed=error_embed)
+        #     return
+        # db_user = db_users[0]
+        #
+        # result_embed = self.create_profile_embed(user, db_user['r6_id'], db_user['r6_nick'], self.find_rank(db_user),
+        #                                          db_user['level'], db_user['mmr'], datetime.date.today(), 'green')
+        # await ctx.send(embed=result_embed)
+        error_embed = self.create_message_embed(user, 'red', "!r6r profil komutu geçici olark devre dışı.")
+        await ctx.send(embed=error_embed)
 
     async def delete(self, ctx, user):
         # is registered
@@ -290,28 +295,34 @@ class MainCog(commands.Cog):
         await ctx.send(embed=result_embed)
 
     async def silent_update(self, db_user):
-        player = await self.stat_api.get_player(db_user['r6_nick'], update=True)
-        # player = await self.stat_api.player(db_user['r6_id'], True)
         guild = self.bot.get_guild(list(self.configs.keys())[0])
         user = guild.get_member(db_user['dc_id'])
         if not user:
             # user left the guild
             await self.log(guild.id, f"Can't find <@!{db_user['dc_id']}> in server ")
 
-            #await self.db.delete_user(db_user['dc_id'])
-            #await self.log(guild.id, f"{db_user['dc_id']} deleted from database")
+            # await self.db.delete_user(db_user['dc_id'])
+            # await self.log(guild.id, f"{db_user['dc_id']} deleted from database")
 
             return
 
+        player = await self.stat_api.get_player(db_user['r6_nick'], update=True)
+        # player = await self.stat_api.player(db_user['r6_id'], True)
+        if not player:
+            await self.send_notice(player)
+            roles_assigned = await self.assign_role(user, "Unranked")
+            await self.log(guild.id, f"DC:{str(user)} - <@!{db_user['dc_id']}>  R6:{db_user['r6_nick']}) Can't find r6s account, rank set to unranked and notice sent.")
+        else:
+            roles_assigned = await self.assign_role(user, player.rank_short)
+
         # assign new role
-        roles_assigned = await self.assign_role(user, player.rank_short)
         if roles_assigned:
             # update database
             await self.db.update_user(db_user['dc_id'], db_user['dc_nick'], db_user['r6_id'], db_user['r6_nick'], player.level,
                                       player.mmr, datetime.date.today())
 
             # log result
-            await self.log(guild.id, f"{str(user)} - ({db_user['r6_nick']}), MMR: {db_user['mmr']} -> {player.mmr}")
+            await self.log(guild.id, f"DC:{str(user)} - <@!{db_user['dc_id']}>  R6:{db_user['r6_nick']}) MMR: {db_user['mmr']} -> {player.mmr}")
 
     async def fetch_configs(self):
         config_columns = await self.db.get_config_columns()
@@ -472,6 +483,18 @@ class MainCog(commands.Cog):
         # add role
         await user.add_roles(role_to_add)
         return True
+
+    async def send_notice(self, user, silent=True):
+        if silent:
+            async for message in user.history(limit=15):
+                if message.author == self.bot.user:
+                    return
+        notice_embed = discord.Embed(colour=discord.Colour(self.colors['red']),
+                              timestamp=datetime.datetime.utcfromtimestamp(time.time()), description="Rank rolünüzün otomatik güncellemesi sırasında hata oluştu. \n#rank-onay kanalından tekrar kayıt olarak hatayı düzeltebilirsiniz. O zamana kadar rolünüz Unranked olarak ayarlanmıştır. \nDestek için ticket oluşturabilirsiniz.")
+        notice_embed.set_author(name="Rainbow Six Siege TR", icon_url="https://i.hizliresim.com/PURMY6.png")
+        notice_embed.add_field(name="Yeniden Kayıt", value='#rank-onay kanalına gidin\n"!r6r sil" yazın silme işlemini onaylayın\n"!r6r kayıt *<nickname>*" yazıp bilgileriniz doğruysa işlemi onaylayın.')
+        notice_embed.set_footer(text="R6S Rank Bot")
+        await user.send("https://discord.gg/JdnrazD", embed=notice_embed)
 
 
     async def log(self, guild_id, msg):
