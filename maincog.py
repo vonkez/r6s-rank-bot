@@ -174,6 +174,22 @@ class MainCog(commands.Cog):
     async def force_update_all(self, ctx):
         await self.update_all(ignore_ur=True)
 
+    @admin.command()
+    async def manuel_update_all(self, ctx):
+        await self.update_all(ignore_ur=False)
+
+    @admin.command()
+    async def delete_left_users(self, ctx):
+        db_users = await self.db.get_all_users()
+        for db_user in db_users:
+            guild = self.bot.get_guild(list(self.configs.keys())[0])
+            user = guild.get_member(db_user['dc_id'])
+            if not user:
+                # user left the guild
+                await self.log(guild.id, f"<@!{db_user['dc_id']}> deleted from from database")
+                await self.db.delete_user(db_user['dc_id'])
+                await asyncio.sleep(0.2)
+
     # endregion
 
     # region main methods
@@ -310,9 +326,13 @@ class MainCog(commands.Cog):
         player = await self.stat_api.get_player(db_user['r6_nick'], update=True)
         # player = await self.stat_api.player(db_user['r6_id'], True)
         if not player:
-            await self.send_notice(user)
+            try:
+                await self.send_notice(user)
+                await self.log(guild.id, f"DC:{str(user)} - <@!{db_user['dc_id']}>  R6:{db_user['r6_nick']} Can't find r6s account, rank set to unranked and notice sent.")
+            except discord.Forbidden:
+                await self.log(guild.id, f"DC:{str(user)} - <@!{db_user['dc_id']}>  R6:{db_user['r6_nick']} Can't find r6s account, rank set to unranked (PM blocked).")
+
             roles_assigned = await self.assign_role(user, "Unranked")
-            await self.log(guild.id, f"DC:{str(user)} - <@!{db_user['dc_id']}>  R6:{db_user['r6_nick']} Can't find r6s account, rank set to unranked and notice sent.")
             await self.db.update_user(db_user['dc_id'], db_user['dc_nick'], db_user['r6_id'], db_user['r6_nick'], db_user['level'], 0, datetime.date.today())
             return
 
@@ -350,13 +370,13 @@ class MainCog(commands.Cog):
         for u in db_users:
             if ignore_ur:
                 await self.silent_update(u)
-                await asyncio.sleep(5)
+                await asyncio.sleep(3)
                 counter += 1
             else:
                 time_elapsed = today - u['update_date']
                 if time_elapsed > self.update_rate:
                     await self.silent_update(u)
-                    await asyncio.sleep(5)
+                    await asyncio.sleep(3)
                     counter += 1
         await self.log(guild_id, f'Otomatik rank güncelleme bitti. {counter}/{len(db_users)}')
 
