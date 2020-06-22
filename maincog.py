@@ -311,9 +311,11 @@ class MainCog(commands.Cog):
         if not player:
             await self.send_notice(user)
             roles_assigned = await self.assign_role(user, "Unranked")
-            await self.log(guild.id, f"DC:{str(user)} - <@!{db_user['dc_id']}>  R6:{db_user['r6_nick']}) Can't find r6s account, rank set to unranked and notice sent.")
-        else:
-            roles_assigned = await self.assign_role(user, player.rank_short)
+            await self.log(guild.id, f"DC:{str(user)} - <@!{db_user['dc_id']}>  R6:{db_user['r6_nick']} Can't find r6s account, rank set to unranked and notice sent.")
+            await self.db.update_user(db_user['dc_id'], db_user['dc_nick'], db_user['r6_id'], db_user['r6_nick'], db_user['level'], 0, datetime.date.today())
+            return
+
+        roles_assigned = await self.assign_role(user, player.rank_short)
 
         # assign new role
         if roles_assigned:
