@@ -309,7 +309,7 @@ class MainCog(commands.Cog):
         player = await self.stat_api.get_player(db_user['r6_nick'], update=True)
         # player = await self.stat_api.player(db_user['r6_id'], True)
         if not player:
-            await self.send_notice(player)
+            await self.send_notice(user)
             roles_assigned = await self.assign_role(user, "Unranked")
             await self.log(guild.id, f"DC:{str(user)} - <@!{db_user['dc_id']}>  R6:{db_user['r6_nick']}) Can't find r6s account, rank set to unranked and notice sent.")
         else:
