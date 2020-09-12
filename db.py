@@ -32,7 +32,7 @@ class DB:
                 gold bigint,
                 platinum bigint,
                 diamond bigint,
-                champion bigint);""")
+                champions bigint);""")
 
             # Create users table
             await con.execute("""

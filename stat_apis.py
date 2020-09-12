@@ -104,8 +104,8 @@ class R6Stats:
     async def seasonal(self, nickname):
         async with aiohttp.ClientSession(headers=self.headers) as session:
             async with session.get(f"https://api2.r6stats.com/public-api/stats/{nickname}/pc/seasonal") as resp, self.limiter:
-                json_resp = await resp.json()
                 if resp.status == 200:
+                    json_resp = await resp.json()
                     player = SimpleNamespace(name=json_resp['username'],
                                              platform=json_resp['platform'],
                                              uplay_id=json_resp['uplay_id'],
