@@ -112,12 +112,12 @@ class R6Stats:
                                              ubisoft_id=json_resp['ubisoft_id'],
                                              avatar_146=json_resp['avatar_url_146'],
                                              avatar256=json_resp['avatar_url_256'],
-                                             mmr=json_resp['seasons']['steel_wave']['regions']['emea'][0]['mmr'],
-                                             max_mmr=json_resp['seasons']['steel_wave']['regions']['emea'][0]['max_mmr'],
-                                             rank_text=json_resp['seasons']['steel_wave']['regions']['emea'][0]['rank_text'],
-                                             rank_no=json_resp['seasons']['steel_wave']['regions']['emea'][0]['rank'],
-                                             rank_image=json_resp['seasons']['steel_wave']['regions']['emea'][0]['rank_image'],
-                                             rank_short=json_resp['seasons']['steel_wave']['regions']['emea'][0]['rank_text'].split()[0])
+                                             mmr=json_resp['seasons']['shadow_legacy']['regions']['emea'][0]['mmr'],
+                                             max_mmr=json_resp['seasons']['shadow_legacy']['regions']['emea'][0]['max_mmr'],
+                                             rank_text=json_resp['seasons']['shadow_legacy']['regions']['emea'][0]['rank_text'],
+                                             rank_no=json_resp['seasons']['shadow_legacy']['regions']['emea'][0]['rank'],
+                                             rank_image=json_resp['seasons']['shadow_legacy']['regions']['emea'][0]['rank_image'],
+                                             rank_short=json_resp['seasons']['shadow_legacy']['regions']['emea'][0]['rank_text'].split()[0])
                     return player
                 elif resp.status == 404 or resp.status == 500:
                     return None
