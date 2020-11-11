@@ -74,7 +74,9 @@ class R6RCog(commands.Cog):
         elif isinstance(error, NotOwner) or isinstance(error, ChannelNotAllowed):
             pass
         else:
-            logger.error(f"{ctx.author} {ctx.command} komutunu kullanırken beklenedik bir hata aldı.")
+            await self.log(f"{ctx.author} {ctx.command} komutunu kullanırken beklenmedik bir hata aldı.", Color.RED,
+                           True)
+            logger.error(f"{ctx.author} {ctx.command} komutunu kullanırken beklenmedik bir hata aldı.")
             logger.error("+global error handler ")
             logger.error(error)
             logger.error('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
