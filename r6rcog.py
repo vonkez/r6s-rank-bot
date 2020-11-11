@@ -8,7 +8,7 @@ from typing import Optional, List
 from discord import Guild, Member, Role, TextChannel
 from discord.ext import commands
 from discord.ext.commands import NotOwner, CommandInvokeError, MissingRequiredArgument, CommandNotFound, \
-    MemberNotFound, TooManyArguments
+    MemberNotFound, TooManyArguments, BadArgument
 from loguru import logger
 import discord
 
@@ -49,6 +49,8 @@ class R6RCog(commands.Cog):
             logger.info(f"{ctx.author} {ctx.command} komutunu kullanırken MissingRequiredArgument hatası aldı.")
         elif isinstance(error, TooManyArguments):
             logger.info(f"{ctx.author} {ctx.command} komutunu kullanırken TooManyArguments hatası aldı.")
+        elif  isinstance(error, BadArgument):
+            logger.info(f"{ctx.author} {ctx.command} komutunu kullanırken BadArgument hatası aldı.")
         elif isinstance(error, CommandNotFound):
             logger.info(f"{ctx.author} {ctx.channel} kanalında CommandNotFound hatası aldı.")
         elif isinstance(error, ConnectionError):
@@ -193,7 +195,7 @@ class R6RCog(commands.Cog):
             error = error.original
         if isinstance(error, PlayerNotFound):
             error_embed = MessageEmbed(ctx, f"`{error.args[0]}` bulunamadı, doğru yazdığınızdan emin olun.")
-        elif isinstance(error, MissingRequiredArgument) or isinstance(error, TooManyArguments):
+        elif isinstance(error, MissingRequiredArgument) or isinstance(error, TooManyArguments) or isinstance(error, BadArgument):
             error_embed = MessageEmbed(ctx, "Komutu yazarken yazım yanlışı yaptınız. `!r6r kayıt <nickname>` veya `!r6r kayıt <nickname> <platform>`")
         elif isinstance(error, ConnectionError):
             error_embed = MessageEmbed(ctx, "Stat sağlayıcına bağlanırken bir hata oluştu. Sunucu yetkililerine bildirin.")

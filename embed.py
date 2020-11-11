@@ -162,7 +162,7 @@ class AutoUpdateEmbed(discord.Embed):
         self.update_fields()
 
     def get_last_logs(self) -> str:
-        return '\n'.join(self.logs[-5:])
+        return '\n'.join(self.logs[-4:])
 
     def get_progress_bar(self) -> str:
         filled_amount = int(self.percent_progress*0.35)
