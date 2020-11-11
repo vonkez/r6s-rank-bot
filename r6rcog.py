@@ -658,13 +658,10 @@ class R6RCog(commands.Cog):
                     await self.update_roles(db_user)
                     await db_user.save()
                     update_embed.update_progress(i)
-                    await asyncio.sleep(3)
                     log_message = f"{i}. {db_user.dc_nick} - {db_user.r6_nick} || {db_user.rank} -> {original_db_user.rank}"
                     update_embed.add_log(log_message)
                     logger.info(log_message)
 
-                    if (i % 5 == 0) or (i == len(expired_users)):
-                        await msg.edit(embed=update_embed)
 
                 except PlayerNotFound:
                     successful = await self.send_notice(member, db_user)
@@ -699,9 +696,13 @@ class R6RCog(commands.Cog):
                     db_user.inactive = True
                     await db_user.save()
 
+                await asyncio.sleep(3)
+                if (i % 5 == 0) or (i == len(expired_users)):
+                    await msg.edit(embed=update_embed)
+
             update_embed.add_log("Otomatik güncelleme tamamlandı")
             logger.info("Otomatik güncelleme tamamlandı")
-            update_embed.update_progress(len(all_users))
+            # update_embed.update_progress(len(expired_users))
             await msg.edit(embed=update_embed)
 
             if fails := len(failed_user_updates) > 0:
