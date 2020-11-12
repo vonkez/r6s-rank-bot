@@ -705,7 +705,7 @@ class R6RCog(commands.Cog):
             # update_embed.update_progress(len(expired_users))
             await msg.edit(embed=update_embed)
 
-            if fails := len(failed_user_updates) > 0:
+            if (fails := len(failed_user_updates)) > 0:
                 msg = f"{fails} tane kullanıcının güncellemesinden hata oluştu"
                 if important_error_occcured:
                     msg += "(Kontrol edilmesi gereken hatalar oluştu)"
