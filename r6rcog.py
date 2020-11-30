@@ -167,7 +167,7 @@ class R6RCog(commands.Cog):
 
         db_user: DBUser = await DBUser.filter(r6_nick=nickname).first()
         if db_user is not None:
-            msg = f"Nick çakışması kayıtlı kullanıcı: {db_user.dc_id} - r6: {db_user.r6_nick}, kayıt olmaya çalışan: {ctx.author.mention()}"
+            msg = f"Nick çakışması kayıtlı kullanıcı: {db_user.dc_id} - r6: {db_user.r6_nick}, kayıt olmaya çalışan: {ctx.author.mention}"
             logger.warning(msg)
             await self.log(msg, Color.RED, True)
             embed = MessageEmbed(ctx, message=f"`{db_user.r6_nick}` nickiyle açılmış bir kayıt bulunuyor. **Sizin olmayan nicklerle kayıt olmak yasaktır.** Eğer bu nick size aitse `#ticket` kanalından ticket oluşturunuz.")
