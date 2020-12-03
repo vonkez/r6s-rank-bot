@@ -190,7 +190,7 @@ class RateLimiter:
             raise RateLimitExceeded()
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        if exc_type is PlayerNotFound or exc_tb is ConnectionError:
+        if exc_type is PlayerNotFound or exc_type is ConnectionError:
             return
         if exc_type is not None:
             logger.error(exc_type)

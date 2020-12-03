@@ -49,8 +49,7 @@ class R6RCog(commands.Cog):
             logger.info(f"{ctx.author} {ctx.command} komutunu kullanırken MissingRequiredArgument hatası aldı.")
         elif isinstance(error, TooManyArguments):
             logger.info(f"{ctx.author} {ctx.command} komutunu kullanırken TooManyArguments hatası aldı.")
-        elif  isinstance(error, BadArgument):
-            logger.info(f"{ctx.author} {ctx.command} komutunu kullanırken BadArgument hatası aldı.")
+
         elif isinstance(error, CommandNotFound):
             logger.info(f"{ctx.author} {ctx.channel} kanalında CommandNotFound hatası aldı.")
         elif isinstance(error, ConnectionError):
@@ -67,6 +66,8 @@ class R6RCog(commands.Cog):
             logger.error(f"{ctx.author} {ctx.command} komutunu kullanırken MemberNotFound hatası aldı.")
             await self.log(f"{ctx.author} {ctx.command} komutunu kullanırken MemberNotFound hatası aldı.", Color.RED,
                            True)
+        elif isinstance(error, BadArgument):
+            logger.info(f"{ctx.author} {ctx.command} komutunu kullanırken BadArgument hatası aldı.")
         elif isinstance(error, RoleNotFound):
             logger.error(f"{ctx.author} {ctx.command} komutunu kullanırken RoleNotFound hatası aldı.")
             await self.log(f"{ctx.author} {ctx.command} komutunu kullanırken RoleNotFound hatası aldı.", Color.RED,
@@ -393,7 +394,10 @@ class R6RCog(commands.Cog):
             for user in all_users:
                 user.rank = "Unranked"
                 user.rank_short = RankShort.UNRANKED
-                await self.update_roles(user)
+                try:
+                    await self.update_roles(user)
+                except MemberNotFound:
+                    pass
                 await user.save()
                 await asyncio.sleep(0.2)
                 counter += 1
