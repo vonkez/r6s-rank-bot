@@ -55,7 +55,7 @@ class R6RCog(commands.Cog):
         elif isinstance(error, ConnectionError):
             logger.info(f"{ctx.author} {ctx.command} komutunu kullanırken ConnectionError hatası aldı.")
             await self.log(f"{ctx.author} {ctx.command} komutunu kullanırken ConnectionError hatası aldı.", Color.RED,
-                           True)
+                           False)
         elif isinstance(error, RateLimitExceeded):
             logger.error(f"{ctx.author} {ctx.command} komutunu kullanırken RateLimitExceeded hatası aldı.")
             await self.log(f"{ctx.author} {ctx.command} komutunu kullanırken RateLimitExceeded hatası aldı.", Color.RED,
@@ -201,7 +201,7 @@ class R6RCog(commands.Cog):
         elif isinstance(error, MissingRequiredArgument) or isinstance(error, TooManyArguments) or isinstance(error, BadArgument):
             error_embed = MessageEmbed(ctx, "Komutu yazarken yazım yanlışı yaptınız. `!r6r kayıt <nickname>` veya `!r6r kayıt <nickname> <platform>`")
         elif isinstance(error, ConnectionError):
-            error_embed = MessageEmbed(ctx, "Stat sağlayıcına bağlanırken bir hata oluştu. Sunucu yetkililerine bildirin.")
+            error_embed = MessageEmbed(ctx, "Stat sağlayıcına bağlanırken bir hata oluştu. Lütfen biraz sonra tekrar deneyin. Eğer hata devam ediyorsa sunucu yetkililerine bildirin.")
         elif isinstance(error, RateLimitExceeded):
             error_embed = MessageEmbed(ctx, "Bot aşırı yük altında, sonra tekrar deneyin.")
         elif isinstance(error, ConfirmationTimeout):
@@ -246,7 +246,7 @@ class R6RCog(commands.Cog):
         elif isinstance(error, MissingRequiredArgument) or isinstance(error, TooManyArguments):
             error_embed = MessageEmbed(ctx, "Komutu yazarken yazım yanlışı yaptınız.\n`!r6r güncelle` yazmanız yeterli")
         elif isinstance(error, ConnectionError):
-            error_embed = MessageEmbed(ctx, "Stat sağlayıcına bağlanırken bir hata oluştu. Sunucu yetkililerine bildirin.")
+            error_embed = MessageEmbed(ctx, "Stat sağlayıcına bağlanırken bir hata oluştu. Lütfen biraz sonra tekrar deneyin. Eğer hata devam ediyorsa sunucu yetkililerine bildirin.")
         elif isinstance(error, RateLimitExceeded):
             error_embed = MessageEmbed(ctx, "Bot aşırı yük altında, sonra tekrar deneyin.")
         elif isinstance(error, MemberNotFound):
@@ -699,7 +699,7 @@ class R6RCog(commands.Cog):
                 except ConnectionError:
                     logger.error(f"Connection error {db_user.r6_nick}")
                     update_embed.add_log(f"Connection error {db_user.r6_nick}")
-                    important_error_occcured = True
+                    important_error_occcured = False
                     failed_user_updates.append(db_user)
                 except RateLimitExceeded:
                     logger.error(f"RateLimitExceeded error {db_user.r6_nick}")
