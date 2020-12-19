@@ -447,24 +447,38 @@ class R6RCog(commands.Cog):
 
     @admin.command(name="inaktif_kontrol")
     async def inaktif_kontrol(self, ctx: commands.Context) -> None:
+        guild: Guild = self.bot.guilds[0]
         inactive_users = await DBUser.filter(inactive=True).all()
 
         total_inactive_users = len(inactive_users)
         activated_users = 0
+        left_users = 0
+        errors = 0
         counter = 0
-        msg = await ctx.send(f"{activated_users} activated - {counter}/{total_inactive_users}")
+        msg = await ctx.send(f"{left_users} ayrıldı - {activated_users} activated - {errors} hata - {counter}/{total_inactive_users}")
         for db_user in inactive_users:
-            player: Player = await self.stat_provider.get_player(db_user.r6_nick, db_user.platform)
+            member: Optional[Member] = guild.get_member(db_user.dc_id)
+            if member is None:
+                left_users += 1
+            else:
+                try:
+                    player: Player = await self.stat_provider.get_player(db_user.r6_nick, db_user.platform)
+                    db_user.update_from_player(player, False)
 
-            db_user.update_from_player(player, False)
-            if db_user.inactive is False:
-                activated_users += 1
-                await self.update_roles(db_user)
-                await db_user.save()
+                except Exception as error:
+                    errors += 1
+                    traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
+
+                await asyncio.sleep(3)
+
+                if db_user.inactive is False:
+                    activated_users += 1
+                    await self.update_roles(db_user)
+                    await db_user.save()
             counter += 1
             if counter % 5 == 0:
-                await msg.edit(content=f"{activated_users} activated - {counter}/{total_inactive_users}")
-        await msg.edit(content=f"{activated_users} activated - {counter}/{total_inactive_users}")
+                await msg.edit(content=f"{left_users} ayrıldı - {activated_users} activated - {errors} hata - {counter}/{total_inactive_users}")
+        await msg.edit(content=f"{left_users} ayrıldı - {activated_users} activated - {errors} hata - {counter}/{total_inactive_users}")
         await ctx.send("İşlem tamamlandı")
 
     @admin.command(name="inaktif_sil")
@@ -726,22 +740,6 @@ class R6RCog(commands.Cog):
             return True
         except discord.Forbidden:
             return False
-
-    @commands.command(name="armutlu_pasta")
-    async def elma(self, ctx: commands.Context) -> None:
-        embed = AutoUpdateEmbed(1000, 222, 20)
-        embed.add_log("Bişeyler oldu..")
-        embed.add_log("Bişeyler oldu2..")
-        embed.add_log("Bişeyler oldu3..")
-        embed.update_progress(48)
-        msg = await ctx.send(embed=embed)
-        await asyncio.sleep(3)
-        embed.update_progress(111)
-        await msg.edit(embed=embed)
-        await asyncio.sleep(3)
-        embed.update_progress(222)
-        embed.add_log("Tamamlandı")
-        await msg.edit(embed=embed)
 
     async def log(self, msg: str, color: Color = Color.GREEN, important: bool = False):
         """
