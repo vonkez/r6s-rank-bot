@@ -649,7 +649,7 @@ class R6RCog(commands.Cog):
             for user in all_users:
                 if user.inactive:
                     inactive_users.append(user)
-                elif today - user.last_command > inactive_limit:
+                elif today - user.last_change > inactive_limit:
                     new_inactive_users.append(user)
                 elif ignore_expiration:
                     expired_users.append(user)
