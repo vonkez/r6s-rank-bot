@@ -464,10 +464,12 @@ class R6RCog(commands.Cog):
                 try:
                     player: Player = await self.stat_provider.get_player(db_user.r6_nick, db_user.platform)
                     db_user.update_from_player(player, False)
-
                 except Exception as error:
-                    errors += 1
-                    traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
+                    if error is PlayerNotFound:
+                        pass
+                    else:
+                        errors += 1
+                        traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
 
                 await asyncio.sleep(3)
 
