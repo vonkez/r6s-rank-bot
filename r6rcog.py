@@ -318,6 +318,26 @@ class R6RCog(commands.Cog):
             error_embed = MessageEmbed(ctx, "Beklenmedik bir hata ile karşılaşıldı. Sunucu yetkililerine bildirin.")
         await error_embed.send_error()
 
+    @admin.command(name="yoket")
+    async def yoket(self, ctx: commands.Context, member_id: int) -> None:
+        db_user: DBUser = await DBUser.filter(dc_id=member_id).first()
+
+        if db_user is None:
+            embed = MessageEmbed(ctx,
+                                 message=f'Kayıt bulunamadı.')
+            await embed.send_error()
+            return
+        member_left = False
+        try:
+            await self.clear_roles(ctx, db_user)
+        except:
+            member_left = True
+        await db_user.delete()
+
+        embed = MessageEmbed(ctx, message=f'Kayıt başarıyla silinmiştir{"(Kullanıcı sunucuyu terketmiş)" if member_left else ""}.')
+        await embed.send()
+        return
+
     @admin.command()
     async def ban(self, ctx: commands.Context, member: discord.Member) -> None:
         banned = await self.config.is_banned(member)
