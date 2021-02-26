@@ -1,5 +1,5 @@
 aerich==0.3.3
-aiohttp==3.6.3
+aiohttp==3.7.4
 aiosqlite==0.16.0
 async-timeout==3.0.1
 asyncpg==0.21.0
