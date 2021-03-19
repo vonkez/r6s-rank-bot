@@ -520,6 +520,7 @@ class R6RCog(commands.Cog):
 
         if confirmed:
             for user in selected_inactive_users:
+                await self.clear_roles(ctx, user)
                 await user.delete()
             embed = MessageEmbed(ctx, f"İşlem tamamlandı, {len(selected_inactive_users)} inaktif kullanıcı başarıyla silindi.")
             await embed.send()
