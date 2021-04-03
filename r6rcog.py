@@ -528,6 +528,33 @@ class R6RCog(commands.Cog):
             embed = MessageEmbed(ctx, "İşlem iptal edildi.")
             await embed.send()
 
+    @admin.command(name="kayitsiz_rolleri_temizle")
+    async def kayitsiz_rolleri_temizle(self, ctx: commands.Context) -> None:
+        counter = 0
+        guild: Guild = self.bot.guilds[0]
+
+        message = await ctx.send(f"Temizlik başladı")
+        for member in guild.members:
+            db_user: DBUser = await DBUser.filter(dc_id=member.id).first()
+            if db_user is None:
+                rank_role_ids = await self.config.get_rank_roles()
+                platform_role_ids = await self.config.get_platform_roles()
+
+                rank_roles: List[Role] = [guild.get_role(role_id) for role_id in rank_role_ids]
+                platform_roles: List[Role] = [guild.get_role(role_id) for role_id in platform_role_ids]
+
+                roles_to_remove: List[Role] = []
+
+                for role in member.roles:
+                    if role in rank_roles or role in platform_roles:
+                        roles_to_remove.append(role)
+
+                await member.remove_roles(*roles_to_remove)
+                if counter % 15 == 0:
+                    await message.edit(content=f"{counter} üyenin rolleri temilendi.")
+                counter += 1
+        await message.edit(content=f"Temizlik tamamlandı. {counter} üyenin rolleri temilendi.")
+
     @admin.command(name="guild_kaydet")
     async def guild_kaydet(self, ctx: commands.Context) -> None:
         pass
