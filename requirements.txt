@@ -14,7 +14,7 @@ iso8601==0.1.13
 loguru==0.5.3
 multidict==4.7.6
 packaging==20.4
-pydantic==1.7.2
+pydantic==1.7.4
 PyPika==0.44.0
 tortoise-orm==0.16.17
 typing-extensions==3.7.4.3
