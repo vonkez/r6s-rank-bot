@@ -3,7 +3,7 @@ from discord.ext.commands import CheckFailure, BadArgument, NotOwner
 
 
 from config import Config
-from stat_providers import Platform
+from stat_providers.stat_provider import Platform
 
 
 class ChannelNotAllowed(CheckFailure):

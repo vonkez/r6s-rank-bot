@@ -1,7 +1,7 @@
 from discord.ext.commands import Context
 from tortoise import fields
 from tortoise.models import Model
-from stat_providers import Platform, Player, RankShort
+from stat_providers.stat_provider import Platform, Player, RankShort
 from datetime import datetime
 
 

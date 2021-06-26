@@ -2,7 +2,7 @@ import discord
 import os
 from loguru import logger
 from models import Ban, AllowedChannel, RankRoles, PlatformRoles, Configs
-from stat_providers import RankShort, Platform
+from stat_providers.stat_provider import RankShort, Platform
 from typing import List, Union, Optional
 
 

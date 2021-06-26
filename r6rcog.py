@@ -17,7 +17,9 @@ import asyncio
 from embed import ProfileEmbed, MessageEmbed, ConfirmationTimeout, AutoUpdateEmbed, NicknameNoticeEmbed, \
     AnonymousMessageEmbed, Color
 from models import DBUser
-from stat_providers import Platform, R6Stats, Player, PlayerNotFound, RateLimitExceeded, RankShort
+from stat_providers.r6stats import R6Stats
+from stat_providers.rate_limiter import RateLimitExceeded
+from stat_providers.stat_provider import Platform, Player, PlayerNotFound, RankShort
 from utils import bot_channel_only, platform_converter, admin_only, not_banned, ChannelNotAllowed, UserBanned
 from config import Config, RoleNotFound
 

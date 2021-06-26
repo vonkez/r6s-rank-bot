@@ -1,58 +1,11 @@
 import os
-import time
-from abc import ABC, abstractmethod
+from typing import Dict
 
 import aiohttp
 from loguru import logger
-from enum import Enum
-from typing import Dict
 
-
-class Platform(Enum):
-    PC = "pc"
-    XBOX = "xbox"
-    PS4 = "ps4"
-
-
-class RankShort(Enum):
-    UNRANKED = "unranked"
-    COPPER = "copper"
-    BRONZE = "bronze"
-    SILVER = "silver"
-    GOLD = "gold"
-    PLATINUM = "platinum"
-    DIAMOND = "diamond"
-    CHAMPIONS = "champions"
-
-
-class Player:
-    name: str
-    platform: Platform
-    level: int
-    kd: float
-    uplay_id: str
-    ubisoft_id: str
-    avatar_146: str
-    avatar_256: str
-    mmr: int
-    rank: str
-    rank_short: RankShort
-    rank_no: int
-    rank_image: str
-
-
-class PlayerNotFound(Exception):
-    pass
-
-
-class RateLimitExceeded(Exception):
-    pass
-
-
-class StatProvider(ABC):
-    @abstractmethod
-    async def get_player(self, nickname: str, platform: Platform) -> Player:
-        raise NotImplementedError()
+from stat_providers.rate_limiter import RateLimiter
+from stat_providers.stat_provider import StatProvider, PlayerNotFound, Player, RankShort, Platform
 
 
 class R6Stats(StatProvider):
@@ -166,33 +119,3 @@ class R6Stats(StatProvider):
         player.rank_no = seasonal_json['seasons'][self.SEASON]['regions']['emea'][0]['rank']
         player.rank_image = seasonal_json['seasons'][self.SEASON]['regions']['emea'][0]['rank_image']
         return player
-
-
-class RateLimiter:
-    """
-    A basic async rate limiter that raises exception if it exceeds the limit.
-    """
-    def __init__(self, limit_per_minute):
-        self.tokens = limit_per_minute
-        self.token_rate = limit_per_minute
-        self.updated_at = time.time()
-
-    async def __aenter__(self):
-        if time.time() - self.updated_at > 60:
-            self.tokens = self.token_rate
-            self.updated_at = time.time()
-
-        if self.tokens > 0:
-            self.tokens -= 1
-            return True
-        else:
-            logger.error("Rate limit exceeded")
-            raise RateLimitExceeded()
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        if exc_type is PlayerNotFound or exc_type is ConnectionError:
-            return
-        if exc_type is not None:
-            logger.error(exc_type)
-            logger.error(exc_val)
-            logger.error(exc_tb)
