@@ -17,9 +17,9 @@ import asyncio
 from embed import ProfileEmbed, MessageEmbed, ConfirmationTimeout, AutoUpdateEmbed, NicknameNoticeEmbed, \
     AnonymousMessageEmbed, Color
 from models import DBUser
+from stat_providers.multi_provider import MultiProvider
 from stat_providers.rate_limiter import RateLimitExceeded
 from stat_providers.stat_provider import Platform, Player, PlayerNotFound, RankShort
-from stat_providers.statsdb import StatsDB
 from utils import bot_channel_only, platform_converter, admin_only, not_banned, ChannelNotAllowed, UserBanned
 from config import Config, RoleNotFound
 
@@ -34,7 +34,7 @@ class R6RCog(commands.Cog):
         self.update_loop_frequency: int = 21600   # 6 hours
         self.config = config
         self.bot = bot
-        self.stat_provider = StatsDB()
+        self.stat_provider = MultiProvider()
         self.loop_task = self.bot.loop.create_task(self.update_loop())
         self.update_task: Task = None
         logger.info("R6RCog initialized")
@@ -554,7 +554,7 @@ class R6RCog(commands.Cog):
                 if counter % 15 == 0:
                     await message.edit(content=f"{counter} üyenin rolleri temilendi.")
                 counter += 1
-        await message.edit(content=f"Temizlik tamamlandı. {counter} üyenin rolleri temilendi.")
+        await message.edit(content=f"Temizlik tamamlandı. {counter} üyenin rolleri temizlendi.")
 
     @admin.command(name="guild_kaydet")
     async def guild_kaydet(self, ctx: commands.Context) -> None:
