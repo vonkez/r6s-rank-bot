@@ -20,6 +20,7 @@ from models import DBUser
 from stat_providers.multi_provider import MultiProvider
 from stat_providers.rate_limiter import RateLimitExceeded
 from stat_providers.stat_provider import Platform, Player, PlayerNotFound, RankShort
+from stat_providers.statsdb import StatsDB
 from utils import bot_channel_only, platform_converter, admin_only, not_banned, ChannelNotAllowed, UserBanned
 from config import Config, RoleNotFound
 
@@ -34,7 +35,7 @@ class R6RCog(commands.Cog):
         self.update_loop_frequency: int = 21600   # 6 hours
         self.config = config
         self.bot = bot
-        self.stat_provider = MultiProvider()
+        self.stat_provider = StatsDB()
         self.loop_task = self.bot.loop.create_task(self.update_loop())
         self.update_task: Task = None
         logger.info("R6RCog initialized")
