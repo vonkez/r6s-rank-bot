@@ -1,5 +1,6 @@
 import copy
 import datetime
+import os
 import traceback
 from asyncio import Task, CancelledError
 from math import ceil
@@ -18,6 +19,7 @@ from embed import ProfileEmbed, MessageEmbed, ConfirmationTimeout, AutoUpdateEmb
     AnonymousMessageEmbed, Color
 from models import DBUser
 from stat_providers.multi_provider import MultiProvider
+from stat_providers.r6stats import R6Stats
 from stat_providers.rate_limiter import RateLimitExceeded
 from stat_providers.stat_provider import Platform, Player, PlayerNotFound, RankShort
 from stat_providers.statsdb import StatsDB
@@ -32,10 +34,16 @@ Stats
 
 class R6RCog(commands.Cog):
     def __init__(self, bot: commands.Bot, config: Config) -> None:
+        provider = os.environ["PROVIDER"]
         self.update_loop_frequency: int = 21600   # 6 hours
         self.config = config
         self.bot = bot
-        self.stat_provider = StatsDB()
+        if provider == "MULTI":
+            self.stat_provider = MultiProvider()
+        elif provider == "STATSDB":
+            self.stat_provider = StatsDB()
+        elif provider == "R6STATS":
+            self.stat_provider = R6Stats()
         self.loop_task = self.bot.loop.create_task(self.update_loop())
         self.update_task: Task = None
         logger.info("R6RCog initialized")

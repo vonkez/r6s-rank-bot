@@ -94,8 +94,10 @@ class StatsDB(StatProvider):
         19: plat 3
         20: plat 2
         21: plat 1
-        22: Dia 1
-        23: Champion
+        22: dia 3
+        23: dia 2
+        24: dia 1
+        25: champ
         """
         if rank_no == 0: return "Unranked"
         if rank_no == 1: return "Copper V"
@@ -119,8 +121,10 @@ class StatsDB(StatProvider):
         if rank_no == 19: return "Platinum III"
         if rank_no == 20: return "Platinum II"
         if rank_no == 21: return "Platinum I"
-        if rank_no == 22: return "Diamond"
-        if rank_no == 23: return "Champions"
+        if rank_no == 22: return "Diamond III"
+        if rank_no == 23: return "Diamond II"
+        if rank_no == 24: return "Diamond I"
+        if rank_no == 25: return "Champions"
         else:
             raise Exception("Rank no conversion failed.")
 
