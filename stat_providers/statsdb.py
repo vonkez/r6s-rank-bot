@@ -57,8 +57,12 @@ class StatsDB(StatProvider):
 
         async with aiohttp.ClientSession(headers=self.headers) as session:
             async with session.get(f"https://api.statsdb.net/r6/{platform}/player/{nickname}") as resp:
-                self.limit_remaining = int(resp.headers["x-rate-limit-remaining"])
-                self.reset_timestamp = int(resp.headers["x-rate-limit-reset"])
+                try:
+                    self.limit_remaining = int(resp.headers["x-rate-limit-remaining"])
+                    self.reset_timestamp = int(resp.headers["x-rate-limit-reset"])
+                except:
+                    logger.info("StatDB missing ratelimit header")
+                    pass
 
                 if resp.status == 200:
                     json_resp = await resp.json()
