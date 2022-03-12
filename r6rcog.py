@@ -86,7 +86,7 @@ class R6RCog(commands.Cog):
             pass
         else:
             await self.log(f"{ctx.author} {ctx.command} komutunu kullanırken beklenmedik bir hata aldı.", Color.RED,
-                           True)
+                           False)
             logger.error(f"{ctx.author} {ctx.command} komutunu kullanırken beklenmedik bir hata aldı.")
             logger.error("+global error handler ")
             logger.error(error)
@@ -221,7 +221,7 @@ class R6RCog(commands.Cog):
         elif isinstance(error, RoleNotFound):
             error_embed = MessageEmbed(ctx, f"Rol ataması yapılamadı. Sunucu yetkililerine bildirin.")
         else:
-            error_embed = MessageEmbed(ctx, "Beklenmedik bir hata ile karşılaşıldı. Sunucu yetkililerine bildirin.")
+            error_embed = MessageEmbed(ctx, "Beklenmedik bir hata ile karşılaşıldı. Daha sonra tekrar deneyin.")
         await error_embed.send_error()
 
     @admin.command(name="güncelle")
@@ -262,7 +262,7 @@ class R6RCog(commands.Cog):
         elif isinstance(error, MemberNotFound):
             error_embed = MessageEmbed(ctx, "Member bulunamadı. Sunucu yetkililerine bildirin.")
         else:
-            error_embed = MessageEmbed(ctx, "Beklenmedik bir hata ile karşılaşıldı. Sunucu yetkililerine bildirin.")
+            error_embed = MessageEmbed(ctx, "Beklenmedik bir hata ile karşılaşıldı. Daha sonra tekrar deneyin.")
         await error_embed.send_error()
 
     @admin.command(name="profil")
@@ -759,7 +759,6 @@ class R6RCog(commands.Cog):
                 except ConnectionError:
                     logger.error(f"Connection error {db_user.r6_nick}")
                     update_embed.add_log(f"Connection error {db_user.r6_nick}")
-                    important_error_occcured = False
                     failed_user_updates.append(db_user)
                 except RateLimitExceeded:
                     logger.error(f"RateLimitExceeded error {db_user.r6_nick}")
