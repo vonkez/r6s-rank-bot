@@ -6,10 +6,6 @@ import ssl
 
 
 async def init() -> None:
-    ssl_ctx = ssl.create_default_context()
-    ssl_ctx.check_hostname = False
-    ssl_ctx.verify_mode = ssl.CERT_NONE
-
     db_name = os.environ["DB_NAME"]
     db_host = os.environ["DB_HOST"]
     db_password = os.environ["DB_PASSWORD"]
@@ -26,8 +22,7 @@ async def init() -> None:
                         "host": db_host,
                         "password": db_password,
                         "port": db_port,
-                        "user": db_user,
-                        "ssl": ssl_ctx
+                        "user": db_user
                     }
                 }
             },
