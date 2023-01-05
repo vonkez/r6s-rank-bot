@@ -18,6 +18,7 @@ class RankShort(Enum):
     PLATINUM = "platinum"
     DIAMOND = "diamond"
     CHAMPIONS = "champions"
+    EMERALD = "emerald"
 
 
 class Player:

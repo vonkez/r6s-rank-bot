@@ -1,6 +1,7 @@
 import asyncio
 import signal
 
+from discord import app_commands
 from discord.ext import commands
 import discord
 from loguru import logger
@@ -8,6 +9,7 @@ from r6rcog import R6RCog
 import os
 import db
 import config
+from rank_cog import RankCog
 
 
 class R6STR(commands.Bot):
@@ -15,29 +17,28 @@ class R6STR(commands.Bot):
         super().__init__(
             command_prefix="!",
             activity=discord.Game(name="rainbow6turkiye.com | !r6r "),
-            intents=discord.Intents(guilds=True, members=True, emojis=True, integrations=False, webhooks=False,
-                                    invites=True, voice_states=False, messages=True, reactions=True, typing=True)
+            intents=discord.Intents(guilds=True, members=True, emojis=True, integrations=True, webhooks=False,
+                                    invites=True, voice_states=False, messages=True, reactions=True, typing=True,message_content=True)
         )
 
-        self.first_connect: bool = True
         self.config: config.Config = None
 
         # add shutdown signal handlers
         signal.signal(signal.SIGINT, self.shutdown_signal_handler)
         signal.signal(signal.SIGTERM, self.shutdown_signal_handler)
 
-    async def on_connect(self):
-        if self.first_connect is False:
-            return
-        else:
-            self.first_connect = False
-            await db.init()
-            self.config = await config.Config.create()
-            self.add_cog(R6RCog(self, self.config))
+    async def setup_hook(self) -> None:
+        await db.init()
+        self.config = await config.Config.create()
+        await self.add_cog(R6RCog(self, self.config))
+        await self.add_cog(RankCog(self, self.config))
+
+        self.tree.copy_global_to(guild=discord.Object(id=615450809974521861))
+        await self.tree.sync()
 
     async def clean_shutdown(self):
         await db.close()
-        await self.logout()
+        await self.close()
         logger.info("Clean shutdown completed")
 
     def shutdown_signal_handler(self, signum, frame):
@@ -46,5 +47,6 @@ class R6STR(commands.Bot):
 
 
 if __name__ == '__main__':
-    bot = R6STR()
-    bot.run(os.environ["BOT_TOKEN"])
+    if os.environ["ACTIVE"].lower() == "true":
+        bot = R6STR()
+        bot.run(os.environ["BOT_TOKEN"])

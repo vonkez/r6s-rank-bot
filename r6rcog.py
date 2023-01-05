@@ -6,31 +6,30 @@ from asyncio import Task, CancelledError
 from math import ceil
 from typing import Optional, List
 
-from discord import Guild, Member, Role, TextChannel
+from discord import Guild, Member, Role, TextChannel, app_commands, AppCommandType
 from discord.ext import commands
 from discord.ext.commands import NotOwner, CommandInvokeError, MissingRequiredArgument, CommandNotFound, \
-    MemberNotFound, TooManyArguments, BadArgument
+    MemberNotFound, TooManyArguments, BadArgument, bot
 from loguru import logger
 import discord
 
 import sys
 import asyncio
-from embed import ProfileEmbed, MessageEmbed, ConfirmationTimeout, AutoUpdateEmbed, NicknameNoticeEmbed, \
+from embed_legacy import ProfileEmbed, MessageEmbed, ConfirmationTimeout, AutoUpdateEmbed, NicknameNoticeEmbed, \
     AnonymousMessageEmbed, Color
 from models import DBUser
 from stat_providers.multi_provider import MultiProvider
 from stat_providers.r6stats import R6Stats
 from stat_providers.rate_limiter import RateLimitExceeded
+from stat_providers.sapi import SApi
 from stat_providers.stat_provider import Platform, Player, PlayerNotFound, RankShort
 from stat_providers.statsdb import StatsDB
 from utils import bot_channel_only, platform_converter, admin_only, not_banned, ChannelNotAllowed, UserBanned
 from config import Config, RoleNotFound
 
 """
-Stats
-
+Old commands
 """
-
 
 class R6RCog(commands.Cog):
     def __init__(self, bot: commands.Bot, config: Config) -> None:
@@ -44,9 +43,13 @@ class R6RCog(commands.Cog):
             self.stat_provider = StatsDB()
         elif provider == "R6STATS":
             self.stat_provider = R6Stats()
+        elif provider == "SAPI":
+            self.stat_provider = SApi()
         self.loop_task = self.bot.loop.create_task(self.update_loop())
         self.update_task: Task = None
         logger.info("R6RCog initialized")
+
+
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
@@ -130,203 +133,9 @@ class R6RCog(commands.Cog):
             await self.log(msg, Color.RED)
     # endregions
 
-    # region user commands
-    @r6r.command(name="kayıt", ignore_extra=False)
-    async def kayit(self, ctx: commands.Context, nickname: str, platform: platform_converter = Platform.PC) -> None:
-        await ctx.invoke(self.a_kayit, nickname=nickname, platform=platform, member=ctx.author)
-
-    @kayit.error
-    async def kayit_error(self, ctx: commands.Context, error):
-        await self.a_kayit_error(ctx, error)
-
-    @r6r.command(name="güncelle", ignore_extra=False)
-    async def guncelle(self, ctx: commands.Context) -> None:
-        await ctx.invoke(self.a_guncelle, member=ctx.author)
-
-    @guncelle.error
-    async def guncelle_error(self, ctx: commands.Context, error):
-        await self.a_guncelle_error(ctx, error)
-
-    @r6r.command(ignore_extra=False)
-    async def profil(self, ctx: commands.Context) -> None:
-        await ctx.invoke(self.a_profil, member=ctx.author)
-
-    @profil.error
-    async def profil_error(self, ctx: commands.Context, error):
-        await self.a_profil_error(ctx, error)
-
-    @r6r.command(ignore_extra=False)
-    async def sil(self, ctx: commands.Context) -> None:
-        await ctx.invoke(self.a_sil, member=ctx.author)
-
-    @sil.error
-    async def sil_error(self, ctx: commands.Context, error):
-        await self.a_sil_error(ctx, error)
-
-    # endregion
 
     # region admin commands
-    @admin.command(name="kayıt")
-    async def a_kayit(self, ctx: commands.Context, nickname: str, platform: platform_converter,
-                      member: discord.Member) -> None:
-        db_user: DBUser = await DBUser.filter(dc_id=member.id).first()
 
-        if db_user is not None:
-            embed = MessageEmbed(ctx, message=f"Zaten `{db_user.r6_nick}` nickiyle açılmış bir kayıdınız bulunuyor.")
-            await embed.send_error()
-            return
-
-        db_user: DBUser = await DBUser.filter(r6_nick=nickname).first()
-        if db_user is not None:
-            msg = f"Nick çakışması kayıtlı kullanıcı: {db_user.dc_id} - r6: {db_user.r6_nick}, kayıt olmaya çalışan: {ctx.author.mention}"
-            logger.warning(msg)
-            await self.log(msg, Color.RED, True)
-            embed = MessageEmbed(ctx, message=f"`{db_user.r6_nick}` nickiyle açılmış bir kayıt bulunuyor. **Sizin olmayan nicklerle kayıt olmak yasaktır.** Eğer bu nick size aitse `#ticket` kanalından ticket oluşturunuz.")
-            await embed.send_error()
-            return
-
-        player: Player = await self.stat_provider.get_player(nickname, platform)
-        db_user = DBUser.create_from_player(ctx, player)
-
-        confirmation_embed = ProfileEmbed(ctx, db_user, message="Yukarıdaki bilgiler size aitse ✅, değilse ❌ emojisine tıklayın.")
-        confirmed: bool = await confirmation_embed.ask_confirmation()
-
-        if not confirmed:
-            cancel_embed = MessageEmbed(ctx, message="İşlem iptal edildi.")
-            await cancel_embed.send_error()
-            return
-
-        await self.update_roles(db_user)
-        await db_user.save()
-
-        success_embed = ProfileEmbed(ctx, db_user, "Kayıdınız tamamlanmıştır.")
-        await success_embed.send()
-
-    @a_kayit.error
-    async def a_kayit_error(self, ctx: commands.Context, error):
-        if isinstance(error, CommandInvokeError):
-            error = error.original
-        if isinstance(error, PlayerNotFound):
-            error_embed = MessageEmbed(ctx, f"`{error.args[0]}` bulunamadı, doğru yazdığınızdan emin olun.")
-        elif isinstance(error, MissingRequiredArgument) or isinstance(error, TooManyArguments) or isinstance(error, BadArgument):
-            error_embed = MessageEmbed(ctx, "Komutu yazarken yazım yanlışı yaptınız. `!r6r kayıt <nickname>` veya `!r6r kayıt <nickname> <platform>`")
-        elif isinstance(error, ConnectionError):
-            error_embed = MessageEmbed(ctx, "Stat sağlayıcına bağlanırken bir hata oluştu. Lütfen biraz sonra tekrar deneyin. Eğer hata devam ediyorsa sunucu yetkililerine bildirin.")
-        elif isinstance(error, RateLimitExceeded):
-            error_embed = MessageEmbed(ctx, "Bot aşırı yük altında, sonra tekrar deneyin.")
-        elif isinstance(error, ConfirmationTimeout):
-            error_embed = MessageEmbed(ctx, "Uzun süre cevap vermediğiniz için işleminiz iptal edildi.")
-        elif isinstance(error, MemberNotFound) :
-            error_embed = MessageEmbed(ctx, "Member bulunamadı. Sunucu yetkililerine bildirin.")
-        elif isinstance(error, RoleNotFound):
-            error_embed = MessageEmbed(ctx, f"Rol ataması yapılamadı. Sunucu yetkililerine bildirin.")
-        else:
-            error_embed = MessageEmbed(ctx, "Beklenmedik bir hata ile karşılaşıldı. Daha sonra tekrar deneyin.")
-        await error_embed.send_error()
-
-    @admin.command(name="güncelle")
-    async def a_guncelle(self, ctx: commands.Context, member: discord.Member) -> None:
-        db_user: DBUser = await DBUser.filter(dc_id=member.id).first()
-        original_db_user: DBUser = copy.deepcopy(db_user)
-
-        if db_user is None:
-            embed = MessageEmbed(ctx, message=f'Kaydınız bulunamadı. Güncellemeden önce kayıt olmanız gerekiyor.')
-            await embed.send_error()
-            return
-
-        player: Player = await self.stat_provider.get_player(db_user.r6_nick, db_user.platform)
-
-        if ctx.author.id == db_user.dc_id:
-            db_user.update_from_player(player, True)
-        else:
-            db_user.update_from_player(player, False)
-
-        await self.update_roles(db_user)
-        await db_user.save()
-
-        success_embed = ProfileEmbed(ctx, db_user, message="Profiliniz güncellenmiştir.", old_db_user=original_db_user)
-        await success_embed.send()
-
-    @a_guncelle.error
-    async def a_guncelle_error(self, ctx: commands.Context, error):
-        if isinstance(error, CommandInvokeError):
-            error = error.original
-        if isinstance(error, PlayerNotFound):
-            error_embed = MessageEmbed(ctx, f"{error.args[0]} nicki ile kayıtlısınız. Yeni nicknameinizi kullanarak baştan kayıt olun. `!r6r sil` ardından `!r6r kayıt <nickname>` komutu ile bunu yapabilirsiniz.")
-        elif isinstance(error, MissingRequiredArgument) or isinstance(error, TooManyArguments):
-            error_embed = MessageEmbed(ctx, "Komutu yazarken yazım yanlışı yaptınız.\n`!r6r güncelle` yazmanız yeterli")
-        elif isinstance(error, ConnectionError):
-            error_embed = MessageEmbed(ctx, "Stat sağlayıcına bağlanırken bir hata oluştu. Lütfen biraz sonra tekrar deneyin. Eğer hata devam ediyorsa sunucu yetkililerine bildirin.")
-        elif isinstance(error, RateLimitExceeded):
-            error_embed = MessageEmbed(ctx, "Bot aşırı yük altında, sonra tekrar deneyin.")
-        elif isinstance(error, MemberNotFound):
-            error_embed = MessageEmbed(ctx, "Member bulunamadı. Sunucu yetkililerine bildirin.")
-        else:
-            error_embed = MessageEmbed(ctx, "Beklenmedik bir hata ile karşılaşıldı. Daha sonra tekrar deneyin.")
-        await error_embed.send_error()
-
-    @admin.command(name="profil")
-    async def a_profil(self, ctx: commands.Context, member: discord.Member) -> None:
-        db_user: DBUser = await DBUser.filter(dc_id=member.id).first()
-
-        if db_user is None:
-            embed = MessageEmbed(ctx, message=f'Kaydınız bulunamadı. Profil komutunu kullanmak için kayıt olmanız gerekiyor.')
-            await embed.send_error()
-            return
-
-        db_user.last_command = datetime.datetime.today()
-        db_user.inactive = False
-        await db_user.save()
-
-        success_embed = ProfileEmbed(ctx, db_user)
-        await success_embed.send()
-
-    @a_profil.error
-    async def a_profil_error(self, ctx: commands.Context, error):
-        if isinstance(error, CommandInvokeError):
-            error = error.original
-        elif isinstance(error, MissingRequiredArgument) or isinstance(error, TooManyArguments):
-            error_embed = MessageEmbed(ctx, "Komutu yazarken yazım yanlışı yaptınız.\n`!r6r profil` yazmanız yeterli.")
-        else:
-            error_embed = MessageEmbed(ctx, "Beklenmedik bir hata ile karşılaşıldı. Sunucu yetkililerine bildirin.")
-
-        await error_embed.send_error()
-
-    @admin.command(name="sil")
-    async def a_sil(self, ctx: commands.Context, member: discord.Member) -> None:
-        db_user: DBUser = await DBUser.filter(dc_id=member.id).first()
-
-        if db_user is None:
-            embed = MessageEmbed(ctx, message=f'Kaydınız bulunamadı. Sil komutunu kullanmak için kayıt olmanız gerekiyor.')
-            await embed.send_error()
-            return
-
-        confirmation_embed = ProfileEmbed(ctx, db_user,
-                                          "Kayıt silme işlemini onaylıyorsanız ✅, onaylamıyorsanız ❌ emojisine tıklayın.")
-        confirmed: bool = await confirmation_embed.ask_confirmation()
-        if confirmed:
-            await self.clear_roles(ctx, db_user)
-            await db_user.delete()
-            embed = MessageEmbed(ctx, message=f'Kaydınız başarıyla silinmiştir.')
-            await embed.send()
-            return
-        else:
-            cancel_embed = MessageEmbed(ctx, message="İşlem iptal edildi.")
-            await cancel_embed.send_error()
-
-    @a_sil.error
-    async def a_sil_error(self, ctx: commands.Context, error):
-        if isinstance(error, CommandInvokeError):
-            error = error.original
-        if isinstance(error, MemberNotFound):
-            error_embed = MessageEmbed(ctx, "Member bulunamadı. Sunucu yetkililerine bildirin.")
-        elif isinstance(error, ConfirmationTimeout):
-            error_embed = MessageEmbed(ctx, "Uzun süre cevap vermediğiniz için işleminiz iptal edildi.")
-        elif isinstance(error, MissingRequiredArgument) or isinstance(error, TooManyArguments):
-            error_embed = MessageEmbed(ctx, "Komutu yazarken yazım yanlışı yaptınız.\n`!r6r sil` yazmanız yeterli.")
-        else:
-            error_embed = MessageEmbed(ctx, "Beklenmedik bir hata ile karşılaşıldı. Sunucu yetkililerine bildirin.")
-        await error_embed.send_error()
 
     @admin.command(name="yoket")
     async def yoket(self, ctx: commands.Context, member_id: int) -> None:
@@ -365,6 +174,7 @@ class R6RCog(commands.Cog):
     @admin.command()
     async def unban(self, ctx: commands.Context, member: discord.Member) -> None:
         banned = await self.config.is_banned(member)
+
         if not banned:
             embed = MessageEmbed(ctx, "Kullanıcı banlı değil")
             await embed.send_error()

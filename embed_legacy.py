@@ -4,7 +4,7 @@ import time
 from typing import List
 
 import discord
-
+from discord.ext.commands import Context
 from views.confirm import Confirm
 from models import DBUser
 
@@ -21,42 +21,53 @@ class Color:
 
 class BaseEmbed(discord.Embed):
     def __init__(self, **kwargs):
-        self.interaction: discord.Interaction = kwargs.get("interaction")
-        del kwargs["interaction"]
+        self.ctx: Context = kwargs.get("ctx")
+        del kwargs["ctx"]
         super().__init__(**kwargs)
 
-    async def send(self, followup: bool = False) -> None:
+    async def send(self) -> None:
         self.colour = Color.GREEN
-        if followup:
-            await self.interaction.followup.send(embed=self)
-        else:
-            await self.interaction.response.send_message(embed=self)
+        await self.ctx.send(embed=self)
 
-    async def send_error(self, followup: bool = False) -> None:
+    async def send_error(self) -> None:
         self.colour = Color.RED
-        if followup:
-            await self.interaction.followup.send(embed=self)
-        else:
-            await self.interaction.response.send_message(embed=self)
+        await self.ctx.send(embed=self)
 
     async def ask_confirmation(self) -> bool:
+        def check(reaction, user):
+            return user == self.ctx.message.author and (str(reaction.emoji) == '✅' or str(reaction.emoji) == '❌')
+
         self.colour = Color.BLUE
-        confirmation_view = Confirm(self.interaction.user, timeout=30.0)
-        await self.interaction.response.defer()
-        res = await self.interaction.followup.send(embed=self, view=confirmation_view)
-        confirmation_view.response = res
-        await confirmation_view.wait()
-        return confirmation_view.value
+
+        # Send question
+        msg = await self.ctx.send(embed=self)
+
+        # Add reactions
+        await msg.add_reaction('✅')
+        await msg.add_reaction('❌')
+
+        # Listen for reply
+        try:
+            reaction, user = await self.ctx.bot.wait_for('reaction_add', timeout=30.0, check=check)
+            if reaction.emoji == str(reaction.emoji) == '✅':
+                # await msg.clear_reactions()
+                return True
+            if reaction.emoji == str(reaction.emoji) == '❌':
+                # await msg.clear_reactions()
+                return False
+
+        except asyncio.TimeoutError:
+            raise ConfirmationTimeout()
 
 
 class ProfileEmbed(BaseEmbed):
-    def __init__(self, interaction: discord.Interaction, db_user: DBUser, message: str = None, colour=Color.BLUE,
+    def __init__(self, ctx: Context, db_user: DBUser, message: str = None, colour=Color.BLUE,
                  old_db_user: DBUser = None, ):
         timestamp = datetime.datetime.utcfromtimestamp(time.time())
-        super().__init__(timestamp=timestamp, interaction=interaction, colour=colour)
+        super().__init__(timestamp=timestamp, ctx=ctx, colour=colour)
 
-        avatar_url = str(interaction.user.avatar.url)
-        author_str = str(interaction.user)
+        avatar_url = str(ctx.author.avatar.url)
+        author_str = str(ctx.author)
 
         if old_db_user is not None:
             rank = db_user.rank if db_user.rank == old_db_user.rank else f"{old_db_user.rank} -> {db_user.rank}"
@@ -84,12 +95,12 @@ class ProfileEmbed(BaseEmbed):
 
 
 class MessageEmbed(BaseEmbed):
-    def __init__(self, interaction: discord.Interaction, message: str, color=Color.BLUE):
+    def __init__(self, ctx: Context, message: str, color=Color.BLUE):
         timestamp = datetime.datetime.utcfromtimestamp(time.time())
-        super().__init__(timestamp=timestamp, interaction=interaction, color=color)
+        super().__init__(timestamp=timestamp, ctx=ctx, color=color)
 
-        avatar_url = interaction.user.avatar.url
-        author_str = str(interaction.user)
+        avatar_url = ctx.author.avatar.url
+        author_str = str(ctx.author)
 
         self.set_author(name=author_str, icon_url=avatar_url)
         self.set_footer(text="R6S-TR BOT", icon_url="https://i.hizliresim.com/PURMY6.png")

@@ -1,3 +1,4 @@
+import discord
 from discord.ext.commands import Context
 from tortoise import fields
 from tortoise.models import Model
@@ -40,10 +41,10 @@ class DBUser(Model):
         self.last_update = datetime.today()
 
     @staticmethod
-    def create_from_player(ctx: Context, player: Player) -> 'DBUser':
+    def create_from_player(interaction: discord.Interaction, player: Player) -> 'DBUser':
         db_user = DBUser(
-            dc_id=ctx.author.id,
-            dc_nick=ctx.author.name,
+            dc_id=interaction.user.id,
+            dc_nick=interaction.user.name,
             ubisoft_id=player.ubisoft_id,
             uplay_id=player.uplay_id,
             r6_nick=player.name,
@@ -78,6 +79,7 @@ class RankRoles(Model):
     platinum = fields.BigIntField(null=True)
     diamond = fields.BigIntField(null=True)
     champions = fields.BigIntField(null=True)
+    emerald = fields.BigIntField(null=True)
 
 
 class PlatformRoles(Model):

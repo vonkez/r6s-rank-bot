@@ -2,13 +2,13 @@ aerich==0.3.3
 aiohttp==3.7.4
 aiosqlite==0.16.0
 async-timeout==3.0.1
-asyncpg==0.23.0
+asyncpg==0.27.0
 atlastk==0.12.1
 attrs==19.3.0
 chardet==3.0.4
 click==7.1.2
 colorama==0.4.4
-discord.py==1.7.3
+discord.py==2.1.0
 idna==2.10
 iso8601==0.1.13
 loguru==0.5.3
@@ -20,3 +20,4 @@ tortoise-orm==0.16.17
 typing-extensions==3.7.4.3
 win32-setctime==1.0.3
 yarl==1.5.1
+siegeapi==6.0.0rc1
