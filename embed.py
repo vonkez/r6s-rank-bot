@@ -55,7 +55,7 @@ class ProfileEmbed(BaseEmbed):
         timestamp = datetime.datetime.utcfromtimestamp(time.time())
         super().__init__(timestamp=timestamp, interaction=interaction, colour=colour)
 
-        avatar_url = str(interaction.user.avatar.url)
+        avatar_url = str(interaction.user.display_avatar.url)
         author_str = str(interaction.user)
 
         if old_db_user is not None:
