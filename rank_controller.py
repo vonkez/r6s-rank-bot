@@ -10,7 +10,7 @@ from discord.ext.commands import MemberNotFound
 from loguru import logger
 
 from config import Config
-from embed import Color, MessageEmbed, ProfileEmbed
+from embed import Color, MessageEmbed, ProfileEmbed, AnonymousMessageEmbed
 from models import DBUser
 from stat_providers.multi_provider import MultiProvider
 from stat_providers.r6stats import R6Stats
@@ -49,6 +49,7 @@ class RankController():
         if db_user is not None:
             msg = f"Nick çakışması kayıtlı kullanıcı: {db_user.dc_id} - r6: {db_user.r6_nick}, kayıt olmaya çalışan: {interaction.user.mention}"
             logger.warning(msg)
+            await self.log(msg)
             embed = MessageEmbed(interaction,
                                  message=f"`{db_user.r6_nick}` nickiyle açılmış bir kayıt bulunuyor. **Sizin olmayan nicklerle kayıt olmak yasaktır.** Eğer bu nick size aitse `#ticket` kanalından ticket oluşturunuz.")
             await embed.send()
@@ -211,3 +212,24 @@ class RankController():
 
         await member.remove_roles(*roles_to_remove)
         await member.add_roles(*roles_to_add)
+
+    async def log(self, msg: str, color: int = Color.GREEN, important: bool = False):
+        """
+        Sends msg to private log TextChannel.
+        """
+        log_channel_id = await self.config.get_log_channel()
+        if log_channel_id is None:
+            logger.error("Log channels is not set.")
+            return
+
+        channel = self.bot.get_channel(log_channel_id)
+        if channel is None:
+            logger.error("Log channel could not be found.")
+            return
+
+        embed = AnonymousMessageEmbed(msg, color)
+
+        if important:
+            await channel.send("@everyone", embed=embed)
+        else:
+            await channel.send(embed=embed)
