@@ -7,11 +7,11 @@ from stat_providers.stat_provider import StatProvider, PlayerNotFound, Player, R
 
 
 class SApi(StatProvider):
-    auth = Auth(os.environ["UBI_EMAIL"], os.environ["UBI_PASS"], creds_path="creds.json")
-
+    auth = None
     def __init__(self):
+        if self.auth is None:
+            self.auth = Auth(os.environ["UBI_EMAIL"], os.environ["UBI_PASS"], creds_path=os.getcwd() +"\creds.json")
         logger.info("SApi initialized")
-
     async def get_player(self, nickname: str, platform: Platform) -> Player:
         try:
             sapi_player = await self.auth.get_player(name=nickname, platform=self.convert_enum(platform))
