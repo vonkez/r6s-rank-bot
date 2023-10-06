@@ -20,4 +20,4 @@ tortoise-orm==0.16.17
 typing-extensions==3.7.4.3
 win32-setctime==1.0.3
 yarl==1.5.1
-siegeapi==6.1.0
+siegeapi==6.2.1
